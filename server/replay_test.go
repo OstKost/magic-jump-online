@@ -9,15 +9,15 @@ import (
 )
 
 func winningLogs(seed uint32) [][]Action {
-	logs := make([][]Action, 3)
-	for level := 0; level < 3; level++ {
+	logs := make([][]Action, 5)
+	for level := 0; level < 5; level++ {
 		e := newEngine(seed, level, []int{0}, nil)
 		logs[level] = []Action{}
 		for e.Tick < 3000 {
 			nearest := 2000.
 			obstacle := ""
 			for _, o := range e.Items {
-				if o.Kind == "obstacle" && !o.Passed && o.X >= 120 && o.X < nearest {
+				if (o.Kind == "obstacle" || o.Kind == "enemy") && !o.Passed && o.X >= 120 && o.X < nearest {
 					nearest = o.X
 					obstacle = o.Obstacle
 				}
@@ -40,7 +40,7 @@ func winningLogs(seed uint32) [][]Action {
 }
 func TestReplayIsCalculatedAndCanBeRetried(t *testing.T) {
 	s := testServer(t)
-	s.attempts["a"] = &Attempt{ID: "a", Token: "secret", Seed: 42, Count: 1, created: time.Now().Add(-4 * time.Minute)}
+	s.attempts["a"] = &Attempt{ID: "a", Token: "secret", Seed: 42, Count: 1, created: time.Now().Add(-6 * time.Minute)}
 	body, _ := json.Marshal(map[string]any{"token": "secret", "heroes": []int{0}, "logs": winningLogs(42)})
 	for i := 0; i < 2; i++ {
 		r := httptest.NewRequest("POST", "/api/attempts/a/finish", strings.NewReader(string(body)))
@@ -70,7 +70,7 @@ func TestAllDeadRequiresRetryButOneLivingPlayerKeepsGhosts(t *testing.T) {
 
 func TestReplayRejectsJourneyWhereEveryoneDied(t *testing.T) {
 	s := testServer(t)
-	s.attempts["a"] = &Attempt{ID: "a", Token: "secret", Seed: 42, Count: 1, created: time.Now().Add(-4 * time.Minute)}
+	s.attempts["a"] = &Attempt{ID: "a", Token: "secret", Seed: 42, Count: 1, created: time.Now().Add(-6 * time.Minute)}
 	r := httptest.NewRequest("POST", "/api/attempts/a/finish", strings.NewReader(`{"token":"secret","heroes":[0],"logs":[[],[],[]]}`))
 	w := httptest.NewRecorder()
 	s.routes().ServeHTTP(w, r)

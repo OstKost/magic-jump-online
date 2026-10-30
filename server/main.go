@@ -379,7 +379,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 						totals = append(totals, score)
 					}
 				}
-				if ready && level < 3 {
+				if ready && level < 5 {
 					previous := room.Engine
 					room.Engine = newEngineWithDifficulty(room.Seed, level, heroes, totals, room.Difficulty)
 					if previous != nil {
@@ -393,7 +393,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-		case "jump", "duck":
+		case "jump", "duck", "cast":
 			if room.Phase == "playing" && (msg.Type == "duck" && !msg.Pressed || time.Since(member.lastInput) >= 10*time.Millisecond) {
 				room.Engine.input(Action{Player: idx, Kind: msg.Type, Pressed: msg.Pressed})
 				member.lastInput = time.Now()
@@ -473,7 +473,7 @@ func (s *Server) loop(stop <-chan struct{}) {
 							room.Phase = "finished"
 							room.finished = now
 							s.record(room.ID, room.Engine.Players, now, diff)
-						} else if room.Engine.Level == 2 {
+						} else if room.Engine.Level == 4 {
 							room.Phase = "finished"
 							room.finished = now
 							s.record(room.ID, room.Engine.Players, now, diff)
@@ -547,19 +547,19 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 		send(w, map[string]any{"id": a.ID, "players": a.players})
 		return
 	}
-	minElapsed := 180 * time.Second
+	minElapsed := 300 * time.Second
 	maxTicks := 3000
 	if a.Difficulty == "easy" {
-		minElapsed = 45 * time.Second
+		minElapsed = 75 * time.Second
 		maxTicks = 1000
 	} else if a.Difficulty == "medium" {
-		minElapsed = 90 * time.Second
+		minElapsed = 150 * time.Second
 		maxTicks = 2000
 	} else if a.Difficulty == "hard" {
-		minElapsed = 115 * time.Second
+		minElapsed = 190 * time.Second
 		maxTicks = 2500
 	}
-	if time.Since(a.created) < minElapsed || time.Since(a.created) > 2*time.Hour || len(req.Heroes) != a.Count || len(req.Logs) != 3 {
+	if time.Since(a.created) < minElapsed || time.Since(a.created) > 2*time.Hour || len(req.Heroes) != a.Count || len(req.Logs) != 5 {
 		http.Error(w, "Незавершённое путешествие", 400)
 		return
 	}
@@ -580,7 +580,7 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 		}
 		last := -1
 		for _, action := range logs {
-			if action.Tick < last || action.Tick < 0 || action.Tick >= maxTicks || action.Player < 0 || action.Player >= a.Count || (action.Kind != "jump" && action.Kind != "duck") {
+			if action.Tick < last || action.Tick < 0 || action.Tick >= maxTicks || action.Player < 0 || action.Player >= a.Count || (action.Kind != "jump" && action.Kind != "duck" && action.Kind != "cast") {
 				http.Error(w, "Некорректный журнал", 400)
 				return
 			}

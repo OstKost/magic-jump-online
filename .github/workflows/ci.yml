@@ -31,6 +31,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install playwright && playwright install --with-deps chromium
+      - run: python scripts/qa_pwa_updates.py
       - name: Browser smoke
         run: |
           (cd server && go run .) > /tmp/jump-server.log 2>&1 &

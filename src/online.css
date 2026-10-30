@@ -150,3 +150,12 @@
   #online.online-screen .lobby-actions { padding-top: 6px; }
 }
 #online.online-screen .online-controls button { touch-action: none; }
+
+/* Each spectator keeps a complete, proportionally scaled individual map. */
+#online #opponent-lanes { display: flex; flex-direction: row; gap: 8px; }
+#online .remote-lane { flex: 1 1 0; width: 0; min-width: 0; overflow: hidden; }
+#online #opponent-lanes canvas,
+#online #own-lane canvas { display: block; width: 100% !important; height: auto; max-height: none; aspect-ratio: 1100 / 240; object-fit: contain; margin: 0; }
+#online .remote-lane p,
+#online #own-lane > p { color: #f3dab0; font: 600 clamp(9px, 1.4vw, 14px)/1.4 system-ui, sans-serif; margin: 4px 0; overflow-wrap: anywhere; }
+#online #own-lane { margin-top: 12px; }

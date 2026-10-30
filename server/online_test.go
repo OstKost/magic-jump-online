@@ -79,7 +79,7 @@ func TestOnlineMatchAwardsOnlyEligibleWinner(t *testing.T) {
 	}
 	s.mu.Lock()
 	r := s.rooms[first["code"]]
-	r.Engine.Level = 2
+	r.Engine.Level = 4
 	r.Engine.Tick = 2999
 	r.Engine.Players[0].Score = 500
 	r.Engine.Players[1].Score = 600

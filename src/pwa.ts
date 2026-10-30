@@ -31,18 +31,8 @@ export function isIOSDevice(
 }
 
 export function initPWA(): void {
-  // 1. Service Worker Registration
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((reg) => {
-          console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
-        })
-        .catch((err) => {
-          console.warn('[PWA] ServiceWorker registration failed:', err);
-        });
-    });
+  if ('serviceWorker' in navigator && !import.meta.env?.DEV) {
+    initUpdates();
   }
 
   const installButtons = document.querySelectorAll<HTMLButtonElement>('[data-install-btn]');
@@ -253,4 +243,67 @@ export function showToast(message: string, duration = 3500): void {
   window.setTimeout(() => {
     toast?.classList.remove('show');
   }, duration);
+}
+
+// A waiting worker is activated only when the player chooses to reload.
+function initUpdates(): void {
+  let registration: ServiceWorkerRegistration;
+  let reloading = false;
+  let applying = false;
+  let dismissed = false;
+  const banner = document.createElement('aside');
+  banner.id = 'pwa-update';
+  banner.className = 'pwa-update';
+  banner.hidden = true;
+  banner.setAttribute('role', 'status');
+  banner.innerHTML = `<div><strong>Доступна новая версия</strong><p>Обновите игру после раунда. Текущая игра завершится.</p></div><button type="button" data-update>Обновить</button><button type="button" data-later>Позже</button>`;
+  document.body.appendChild(banner);
+  const updateButton = banner.querySelector<HTMLButtonElement>('[data-update]')!;
+  const showUpdate = () => {
+    if (registration.waiting && navigator.serviceWorker.controller && !dismissed) banner.hidden = false;
+  };
+  banner.querySelector('[data-later]')!.addEventListener('click', () => {
+    dismissed = true;
+    banner.hidden = true;
+  });
+  updateButton.addEventListener('click', () => {
+    if (!registration.waiting) return;
+    applying = true;
+    updateButton.disabled = true;
+    updateButton.textContent = 'Обновляем…';
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (applying && !reloading) {
+      reloading = true;
+      window.location.reload();
+    }
+  });
+  const register = async () => {
+    try {
+      registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      showUpdate();
+      const watch = (worker: ServiceWorker | null) => {
+        worker?.addEventListener('statechange', () => {
+          if (worker.state === 'installed') showUpdate();
+        });
+      };
+      watch(registration.installing);
+      registration.addEventListener('updatefound', () => watch(registration.installing));
+      const check = () => {
+        if (navigator.onLine && document.visibilityState === 'visible') {
+          showUpdate();
+          void registration.update().catch(() => {});
+        }
+      };
+      window.addEventListener('online', check);
+      document.addEventListener('visibilitychange', check);
+      window.setInterval(check, 5 * 60 * 1000);
+      check();
+    } catch (err) {
+      console.warn('[PWA] ServiceWorker registration failed:', err);
+    }
+  };
+  if (document.readyState === 'complete') void register();
+  else window.addEventListener('load', () => void register(), { once: true });
 }

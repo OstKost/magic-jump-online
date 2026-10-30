@@ -4,7 +4,7 @@
     [
       {
         "at": 2200,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 1,
         "obstacle": "ground"
       },
@@ -22,8 +22,8 @@
       },
       {
         "at": 6022.061572154053,
-        "kind": "obstacle",
-        "variant": 2,
+        "kind": "enemy",
+        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -46,8 +46,8 @@
       },
       {
         "at": 12933.992403955199,
-        "kind": "obstacle",
-        "variant": 2,
+        "kind": "enemy",
+        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -82,13 +82,7 @@
       },
       {
         "at": 23321.01137735881,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 23321.01137735881,
-        "kind": "bonus",
+        "kind": "enemy",
         "variant": 0,
         "obstacle": "ground"
       },
@@ -136,7 +130,7 @@
       },
       {
         "at": 36043.511044140905,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 0,
         "obstacle": "ground"
       },
@@ -160,14 +154,8 @@
       },
       {
         "at": 42144.868372776546,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 1,
-        "obstacle": "ground"
-      },
-      {
-        "at": 42144.868372776546,
-        "kind": "bonus",
-        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -196,14 +184,8 @@
       },
       {
         "at": 50118.74905843288,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 1,
-        "obstacle": "ground"
-      },
-      {
-        "at": 50118.74905843288,
-        "kind": "bonus",
-        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -234,8 +216,8 @@
       },
       {
         "at": 4304.096838762052,
-        "kind": "obstacle",
-        "variant": 2,
+        "kind": "enemy",
+        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -258,8 +240,8 @@
       },
       {
         "at": 10630.973072745837,
-        "kind": "obstacle",
-        "variant": 2,
+        "kind": "enemy",
+        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -294,13 +276,7 @@
       },
       {
         "at": 21045.96069115214,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 21045.96069115214,
-        "kind": "bonus",
+        "kind": "enemy",
         "variant": 0,
         "obstacle": "ground"
       },
@@ -348,7 +324,7 @@
       },
       {
         "at": 34028.68404947221,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 0,
         "obstacle": "ground"
       },
@@ -372,14 +348,8 @@
       },
       {
         "at": 40172.28040576447,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 1,
-        "obstacle": "ground"
-      },
-      {
-        "at": 40172.28040576447,
-        "kind": "bonus",
-        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -408,14 +378,8 @@
       },
       {
         "at": 48011.12299668603,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 1,
-        "obstacle": "ground"
-      },
-      {
-        "at": 48011.12299668603,
-        "kind": "bonus",
-        "variant": 0,
         "obstacle": "ground"
       },
       {
@@ -432,13 +396,19 @@
       },
       {
         "at": 53681.38146139681,
-        "kind": "obstacle",
+        "kind": "enemy",
         "variant": 1,
         "obstacle": "ground"
       }
     ]
   ],
   "logs": [
+    {
+      "tick": 0,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
     {
       "tick": 0,
       "player": 0,
@@ -470,6 +440,12 @@
       "pressed": true
     },
     {
+      "tick": 110,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 145,
       "player": 1,
       "kind": "duck",
@@ -488,6 +464,12 @@
       "pressed": true
     },
     {
+      "tick": 220,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 246,
       "player": 1,
       "kind": "duck",
@@ -503,6 +485,12 @@
       "tick": 303,
       "player": 1,
       "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 330,
+      "player": 0,
+      "kind": "cast",
       "pressed": true
     },
     {
@@ -530,6 +518,12 @@
       "pressed": true
     },
     {
+      "tick": 440,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 448,
       "player": 1,
       "kind": "duck",
@@ -554,6 +548,12 @@
       "pressed": false
     },
     {
+      "tick": 550,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 581,
       "player": 0,
       "kind": "jump",
@@ -570,6 +570,12 @@
       "player": 1,
       "kind": "duck",
       "pressed": false
+    },
+    {
+      "tick": 660,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
     },
     {
       "tick": 664,
@@ -596,6 +602,12 @@
       "pressed": false
     },
     {
+      "tick": 770,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 808,
       "player": 1,
       "kind": "duck",
@@ -614,6 +626,12 @@
       "pressed": false
     },
     {
+      "tick": 880,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 909,
       "player": 1,
       "kind": "duck",
@@ -630,6 +648,12 @@
       "player": 1,
       "kind": "duck",
       "pressed": false
+    },
+    {
+      "tick": 990,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
     },
     {
       "tick": 996,
@@ -656,6 +680,12 @@
       "pressed": true
     },
     {
+      "tick": 1100,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 1111,
       "player": 1,
       "kind": "duck",
@@ -671,6 +701,12 @@
       "tick": 1162,
       "player": 0,
       "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1210,
+      "player": 0,
+      "kind": "cast",
       "pressed": true
     },
     {
@@ -698,6 +734,12 @@
       "pressed": true
     },
     {
+      "tick": 1320,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 1328,
       "player": 0,
       "kind": "jump",
@@ -722,6 +764,12 @@
       "pressed": true
     },
     {
+      "tick": 1430,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 1458,
       "player": 1,
       "kind": "duck",
@@ -740,6 +788,12 @@
       "pressed": true
     },
     {
+      "tick": 1540,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 1559,
       "player": 1,
       "kind": "duck",
@@ -755,6 +809,12 @@
       "tick": 1616,
       "player": 1,
       "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1650,
+      "player": 0,
+      "kind": "cast",
       "pressed": true
     },
     {
@@ -782,6 +842,12 @@
       "pressed": true
     },
     {
+      "tick": 1760,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 1761,
       "player": 1,
       "kind": "duck",
@@ -806,6 +872,12 @@
       "pressed": false
     },
     {
+      "tick": 1870,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 1909,
       "player": 0,
       "kind": "jump",
@@ -822,6 +894,12 @@
       "player": 1,
       "kind": "duck",
       "pressed": false
+    },
+    {
+      "tick": 1980,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
     },
     {
       "tick": 1992,
@@ -848,6 +926,12 @@
       "pressed": true
     },
     {
+      "tick": 2090,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 2121,
       "player": 1,
       "kind": "duck",
@@ -866,6 +950,12 @@
       "pressed": false
     },
     {
+      "tick": 2200,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 2222,
       "player": 1,
       "kind": "duck",
@@ -882,6 +972,12 @@
       "player": 1,
       "kind": "duck",
       "pressed": false
+    },
+    {
+      "tick": 2310,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
     },
     {
       "tick": 2323,
@@ -905,6 +1001,12 @@
       "tick": 2407,
       "player": 0,
       "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2420,
+      "player": 0,
+      "kind": "cast",
       "pressed": true
     },
     {
@@ -932,6 +1034,12 @@
       "pressed": true
     },
     {
+      "tick": 2530,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 2569,
       "player": 1,
       "kind": "duck",
@@ -947,6 +1055,12 @@
       "tick": 2626,
       "player": 1,
       "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2640,
+      "player": 0,
+      "kind": "cast",
       "pressed": true
     },
     {
@@ -974,6 +1088,12 @@
       "pressed": true
     },
     {
+      "tick": 2750,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 2771,
       "player": 1,
       "kind": "duck",
@@ -989,6 +1109,12 @@
       "tick": 2828,
       "player": 1,
       "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2860,
+      "player": 0,
+      "kind": "cast",
       "pressed": true
     },
     {
@@ -1010,6 +1136,12 @@
       "pressed": true
     },
     {
+      "tick": 2970,
+      "player": 0,
+      "kind": "cast",
+      "pressed": true
+    },
+    {
       "tick": 2973,
       "player": 1,
       "kind": "duck",
@@ -1025,9 +1157,9 @@
   "players": [
     {
       "lives": 0,
-      "score": 76,
-      "roundScore": 76,
-      "invulnerable": 10600
+      "score": 183,
+      "roundScore": 183,
+      "invulnerable": 23740
     },
     {
       "lives": 0,

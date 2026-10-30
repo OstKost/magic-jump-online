@@ -78,6 +78,8 @@ export const WORLDS = [
   { name: 'Горы небожителей', icon: '⛰️', subtitle: 'Над облаками, к горным храмам', sky: 0xb5d2ef, ground: 0x736653, accent: '#b87842', speed: 270, obstacles: ['🪨', '🌿', '🪵'], bonus: '🍁' },
   { name: 'Конфетный мир', icon: '🍭', subtitle: 'Там, где растут леденцы', sky: 0xf8dfea, ground: 0xe8b1c4, accent: '#e16b9b', speed: 310, obstacles: ['🍬', '🍭', '🌳'], bonus: '🍬' },
   { name: 'Млечный путь', icon: '🪐', subtitle: 'Выше самых ярких звёзд', sky: 0x292d50, ground: 0x66628e, accent: '#9081d9', speed: 350, obstacles: ['☄️', '⭐', '🪨'], bonus: '💎' },
+  { name: 'Топь', icon: '🌿', subtitle: 'По тропам русских сказок', sky: 0x284f50, ground: 0x384633, accent: '#8ac49a', speed: 350, obstacles: ['🪵','🍄','🌿'], bonus: '🟠' },
+  { name: 'Дюна', icon: '🏜️', subtitle: 'Сквозь пески к древним тайнам', sky: 0xd79864, ground: 0xb77e40, accent: '#edbd68', speed: 350, obstacles: ['🪨','💠','🏛️'], bonus: '💠' },
 ];
 export interface Player { lives: number; score: number; roundScore: number; invulnerable: number }
 export function newPlayer(score = 0, lives = 3): Player { return { lives, score, roundScore: 0, invulnerable: 0 }; }
@@ -93,7 +95,7 @@ export function obstacleCollision(y: number, ducking: boolean, type: ObstacleTyp
   const top = type === 'overhead' ? 112 : 43;
   return feet < top && head > bottom;
 }
-export interface Spawn { at: number; kind: 'obstacle' | 'bonus'; variant: number; obstacle?: ObstacleType }
+export interface Spawn { at: number; kind: 'obstacle' | 'bonus' | 'enemy'; variant: number; obstacle?: ObstacleType }
 export function schedule(seed: number, difficulty?: DifficultyKey): Spawn[] {
   let state = seed >>> 0;
   const random = () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296; };
@@ -126,7 +128,15 @@ export function schedule(seed: number, difficulty?: DifficultyKey): Spawn[] {
       if (random() > .25) result.push({ at, kind: 'bonus', variant: 0, obstacle });
     }
   }
-  return result;
+  // Replace complete ground blocks, including their attached bonus, without
+  // consuming extra random values or changing the original spawn timing.
+  const enemyTimes = new Map<number, number>();
+  result.filter(e => e.kind === 'obstacle' && e.obstacle === 'ground').forEach((e, i) => {
+    if (i % 2 === 0) enemyTimes.set(e.at, (e.variant + i) % 2);
+  });
+  return result.flatMap(e => enemyTimes.has(e.at)
+    ? e.kind === 'bonus' ? [] : [{ ...e, kind: 'enemy' as const, variant: enemyTimes.get(e.at)! }]
+    : [e]);
 }
 
 /** Equal opportunities and timing; each lane receives a different block order. */
@@ -140,4 +150,16 @@ export function route(seed: number, player: number, difficulty?: DifficultyKey):
     const block = blocks[(i + shift) % blocks.length];
     return block.map(e => ({ ...e, at: targetAt }));
   });
+}
+
+/** The tutorial stays first; the remaining worlds form a seeded permutation. */
+export function worldOrder(seed: number): number[] {
+  const order = Array.from({ length: WORLDS.length }, (_, i) => i);
+  let state = seed >>> 0;
+  for (let i = order.length - 1; i > 1; i--) {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    const j = 1 + Math.floor(state / 4294967296 * i);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
 }

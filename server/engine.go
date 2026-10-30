@@ -20,6 +20,7 @@ type Action struct {
 	Pressed bool   `json:"pressed"`
 }
 type Body struct {
+	ReadyAt    int     `json:"readyAt"`
 	Lives      int     `json:"lives"`
 	Score      int     `json:"score"`
 	RoundScore int     `json:"roundScore"`
@@ -34,19 +35,27 @@ type Body struct {
 	Jumps      int     `json:"jumps"`
 }
 type Object struct {
+	DefeatedAt int `json:"defeatedAt"`
 	Event
 	X      float64 `json:"x"`
 	Player int     `json:"player"`
 	Passed bool    `json:"passed"`
 }
+type Projectile struct {
+	X        float64 `json:"x"`
+	Distance float64 `json:"distance"`
+	Player   int     `json:"player"`
+}
 type Engine struct {
-	Tick       int      `json:"tick"`
-	Level      int      `json:"level"`
-	Difficulty string   `json:"difficulty,omitempty"`
-	Players    []Body   `json:"players"`
-	Items      []Object `json:"items"`
-	plans      [][]Event
-	next       []int
+ World int `json:"world"`
+	Projectiles []Projectile `json:"projectiles"`
+	Tick        int          `json:"tick"`
+	Level       int          `json:"level"`
+	Difficulty  string       `json:"difficulty,omitempty"`
+	Players     []Body       `json:"players"`
+	Items       []Object     `json:"items"`
+	plans       [][]Event
+	next        []int
 }
 
 func scheduleWithDifficulty(seed uint32, difficulty string) []Event {
@@ -85,7 +94,28 @@ func scheduleWithDifficulty(seed uint32, difficulty string) []Event {
 			}
 		}
 	}
-	return out
+	enemyTimes := map[float64]int{}
+	groundIndex := 0
+	for _, ev := range out {
+		if ev.Kind == "obstacle" && ev.Obstacle == "ground" {
+			if groundIndex%2 == 0 {
+				enemyTimes[ev.At] = (ev.Variant + groundIndex) % 2
+			}
+			groundIndex++
+		}
+	}
+	converted := []Event{}
+	for _, ev := range out {
+		if variant, ok := enemyTimes[ev.At]; ok {
+			if ev.Kind == "bonus" {
+				continue
+			}
+			ev.Kind = "enemy"
+			ev.Variant = variant
+		}
+		converted = append(converted, ev)
+	}
+	return converted
 }
 
 func schedule(seed uint32) []Event {
@@ -140,6 +170,7 @@ func newEngineWithDifficulty(seed uint32, level int, heroes []int, totals []int,
 	}
 	e := &Engine{
 		Level:      level,
+ World: worldOrder(seed)[level],
 		Difficulty: difficulty,
 		Players:    make([]Body, len(heroes)),
 		plans:      make([][]Event, len(heroes)),
@@ -166,6 +197,11 @@ func (e *Engine) input(a Action) {
 	}
 	p := &e.Players[a.Player]
 	switch a.Kind {
+	case "cast":
+		if e.Tick*stepMS >= p.ReadyAt {
+			p.ReadyAt = e.Tick*stepMS + 2000
+			e.Projectiles = append(e.Projectiles, Projectile{X: 160, Player: a.Player})
+		}
 	case "jump":
 		if !p.Held {
 			if p.Y >= -.1 {
@@ -204,7 +240,7 @@ func (e *Engine) step() {
 	} else if e.Difficulty == "hard" {
 		speedMult = 1.05
 	}
-	speed := []float64{270, 310, 350}[e.Level] * speedMult
+	speed := []float64{270, 310, 350, 350, 350}[e.World] * speedMult
 	for i, plan := range e.plans {
 		for e.next[i] < len(plan) && plan[e.next[i]].At <= float64(elapsed) {
 			e.Items = append(e.Items, Object{Event: plan[e.next[i]], X: 1150, Player: i})
@@ -221,6 +257,34 @@ func (e *Engine) step() {
 		}
 		p.Duck = p.Y == 0 && p.Held
 	}
+	keptShots := []Projectile{}
+	for _, shot := range e.Projectiles {
+		from := shot.X
+		travel := math.Min(14, 650-shot.Distance)
+		shot.X += travel
+		shot.Distance += travel
+		target := -1
+		for i := range e.Items {
+			o := &e.Items[i]
+			if o.Kind == "enemy" && !o.Passed && o.Player == shot.Player && o.X+28 >= from && o.X-28 <= shot.X+speed*.02 && (target < 0 || o.X < e.Items[target].X) {
+				target = i
+			}
+		}
+		if target >= 0 {
+			e.Items[target].Passed = true
+			e.Items[target].DefeatedAt = elapsed
+			p := &e.Players[shot.Player]
+			points := 25
+			if p.Lives == 0 {
+				points = 20
+			}
+			p.Score += points
+			p.RoundScore += points
+		} else if shot.Distance < 650 {
+			keptShots = append(keptShots, shot)
+		}
+	}
+	e.Projectiles = keptShots
 	for i := range e.Items {
 		o := &e.Items[i]
 		o.X -= speed * .02
@@ -237,7 +301,7 @@ func (e *Engine) step() {
 			threshold = 30
 		}
 		if !o.Passed && math.Abs(o.X-160) < threshold {
-			if o.Kind == "obstacle" && collision(*p, o.Obstacle) {
+			if (o.Kind == "obstacle" || o.Kind == "enemy") && collision(*p, o.Obstacle) {
 				o.Passed = true
 				if p.Lives > 0 && elapsed >= p.Immune {
 					p.Lives--
@@ -272,4 +336,14 @@ func (e *Engine) allDead() bool {
 		}
 	}
 	return true
+}
+
+func worldOrder(seed uint32) []int {
+ order := []int{0,1,2,3,4}
+ for i:=len(order)-1; i>1; i-- {
+  seed = seed*1664525+1013904223
+  j:=1+int(float64(seed)/4294967296*float64(i))
+  order[i],order[j]=order[j],order[i]
+ }
+ return order
 }

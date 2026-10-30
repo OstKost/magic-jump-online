@@ -109,3 +109,21 @@ test('difficulties configure distinct seconds, lives, speeds and obstacle interv
     assert.ok(hardPlan.at(-1)!.at <= 46000);
   }
 });
+
+test('world order keeps tutorial first and visits each world once deterministically', async () => {
+  const { worldOrder, WORLDS } = await import('./rules.ts');
+  const orders = new Set<string>();
+  for (let seed = 0; seed < 100; seed++) {
+    const order = worldOrder(seed);
+    assert.equal(order[0], 0);
+    assert.deepEqual([...order].sort(), WORLDS.map((_, i) => i));
+    assert.deepEqual(order, worldOrder(seed));
+    orders.add(order.join(','));
+  }
+  assert.ok(orders.size > 1);
+});
+
+test('world shuffle matches the server seed fixture', async () => {
+  const { worldOrder } = await import('./rules.ts');
+  assert.deepEqual(worldOrder(42), [0, 3, 4, 1, 2]);
+});

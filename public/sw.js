@@ -1,4 +1,4 @@
-const CACHE_NAME = 'magic-jump-online-v6';
+const CACHE_NAME = 'magic-jump-__BUILD_VERSION__';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -12,22 +12,54 @@ const PRECACHE_ASSETS = [
   '/art/menu-background.png',
   '/art/concept_persons.png',
   '/art/level-1-bg.png',
+  '/art/level-1-floor.png',
   '/art/level-2-bg.png',
   '/art/level-3-bg.png',
+  '/art/level-4-bg.png',
+  '/art/level-5-bg.png',
+  '/assets/enemies/kikimora.png',
+  '/assets/enemies/vodyanoy.png',
+  '/assets/enemies/sandworm.png',
+  '/assets/enemies/desert-guard.png',
+  '/assets/bonuses/world-3.png',
+  '/assets/bonuses/world-4.png',
+  '/assets/obstacles/world-3-0.png',
+  '/assets/obstacles/world-3-1.png',
+  '/assets/obstacles/world-3-2.png',
+  '/assets/obstacles/world-4-0.png',
+  '/assets/obstacles/world-4-1.png',
+  '/assets/obstacles/world-4-2.png',
+  '/assets/obstacles/overhead/level-3-variant-0.png',
+  '/assets/obstacles/overhead/level-3-variant-1.png',
+  '/assets/obstacles/overhead/level-3-variant-2.png',
+  '/assets/obstacles/overhead/level-3-variant-3.png',
+  '/assets/obstacles/overhead/level-4-variant-0.png',
+  '/assets/obstacles/overhead/level-4-variant-1.png',
+  '/assets/obstacles/overhead/level-4-variant-2.png',
+  '/assets/obstacles/overhead/level-4-variant-3.png',
+
   '/art/victory.png',
   '/art/defeat.png',
-  '/art/sprite.png'
+  '/art/sprite.png',
+  '/assets/enemies/ninja.png',
+  '/assets/enemies/archer.png',
+  '/assets/enemies/gingerbread.png',
+  '/assets/enemies/slime.png',
+  '/assets/enemies/robot.png',
+  '/assets/enemies/alien.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
-        console.warn('[SW] Pre-caching partial failure:', err);
-      });
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
-  self.skipWaiting();
+
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {

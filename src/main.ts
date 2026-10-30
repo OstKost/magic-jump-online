@@ -207,7 +207,7 @@ class Adventure extends Phaser.Scene {
     if(reset){this.level=0;this.players=journey.selected.map(()=>newPlayer());this.seed=attempt?.seed??Date.now();}
     else this.players=this.players.map(p=>newPlayer(p.score));
     this.playing=false;this.paused=false;this.awaitingReady=true;this.readyCountdown=0;this.started=true;this.anims.paused=false;journey.resetReady();
-    this.elapsed=0;this.accumulator=0;this.next=0;this.plan=journey.selected.flatMap((_,row)=>route(this.seed+this.level,row).map(s=>({...s,row}))).sort((a,b)=>a.at-b.at);this.resizeArena();this.drawWorld();this.hud();this.updateHeroLabels();
+    logs[this.level]=[];this.elapsed=0;this.accumulator=0;this.next=0;this.plan=journey.selected.flatMap((_,row)=>route(this.seed+this.level,row).map(s=>({...s,row}))).sort((a,b)=>a.at-b.at);this.resizeArena();this.drawWorld();this.hud();this.updateHeroLabels();
     (document.querySelector('#continue') as HTMLButtonElement).disabled=false;
     (document.querySelector('#pause') as HTMLButtonElement).disabled=true;
     document.querySelector('#world-title')!.textContent=`УРОВЕНЬ ${this.level+1} · ${WORLDS[this.level].name}`;
@@ -266,7 +266,7 @@ class Adventure extends Phaser.Scene {
   finish(){
     this.playing=false;this.awaitingReady=false;this.clearDuck();this.runners.forEach(r=>{r.sprite.stop();r.pet.stop();r.magic.clear();});
     (document.querySelector('#pause') as HTMLButtonElement).disabled=true;(document.querySelector('#continue') as HTMLButtonElement).disabled=true;
-    const lost=false,last=this.level===WORLDS.length-1;
+    const lost=this.players.every(p=>p.lives===0),last=this.level===WORLDS.length-1;
     const result=document.querySelector<HTMLElement>('#result')!;result.classList.toggle('is-defeat',lost);
     document.querySelector('#result-eyebrow')!.textContent=`УРОВЕНЬ ${this.level+1} · ${WORLDS[this.level].name}`;
     document.querySelector('#result-title')!.textContent=lost?'Ещё одна попытка?':last?'Равновесие восстановлено!':'Уровень пройден!';
@@ -277,7 +277,7 @@ class Adventure extends Phaser.Scene {
     next.onclick=()=>{if(last&&!lost){void startLocal(journey.count);return;}if(!lost)this.level++;showScreen('play-screen');if(lost){const totals=this.players.map(p=>Math.max(0,p.score-p.roundScore));this.players=totals.map(score=>newPlayer(score));}this.prepareLevel();};
     showScreen('result');
     document.querySelectorAll('.winner-form,.ranking-note').forEach(el=>el.remove());
-    if(last){const target=document.querySelector<HTMLElement>('#result-scores')!;const note=document.createElement('p');note.className='ranking-note';note.textContent=attempt?'Проверяем результат…':'Автономное путешествие завершено. Для рейтинга начните новую игру с интернетом.';target.append(note);if(attempt){const current=attempt;void api<{id:string;players:Player[]}>(`attempts/${current.id}/finish`,{token:current.token,heroes:journey.selected,logs}).then(data=>{if(attempt!==current)return;note.textContent='Результат проверен';nameForms(target,data.id,current.token,data.players);}).catch(()=>{note.textContent='Не удалось проверить результат. Проверьте связь и повторите.';const retry=document.createElement('button');retry.textContent='Повторить отправку';retry.className='secondary';retry.onclick=()=>{retry.disabled=true;void api<{id:string;players:Player[]}>(`attempts/${current.id}/finish`,{token:current.token,heroes:journey.selected,logs}).then(data=>{note.textContent='Результат проверен';retry.remove();nameForms(target,data.id,current.token,data.players)}).catch(err=>{note.textContent=String(err);retry.disabled=false})};note.append(retry);});}}
+    if(last&&!lost){const target=document.querySelector<HTMLElement>('#result-scores')!;const note=document.createElement('p');note.className='ranking-note';note.textContent=attempt?'Проверяем результат…':'Автономное путешествие завершено. Для рейтинга начните новую игру с интернетом.';target.append(note);if(attempt){const current=attempt;void api<{id:string;players:Player[]}>(`attempts/${current.id}/finish`,{token:current.token,heroes:journey.selected,logs}).then(data=>{if(attempt!==current)return;note.textContent='Результат проверен';nameForms(target,data.id,current.token,data.players);}).catch(()=>{note.textContent='Не удалось проверить результат. Проверьте связь и повторите.';const retry=document.createElement('button');retry.textContent='Повторить отправку';retry.className='secondary';retry.onclick=()=>{retry.disabled=true;void api<{id:string;players:Player[]}>(`attempts/${current.id}/finish`,{token:current.token,heroes:journey.selected,logs}).then(data=>{note.textContent='Результат проверен';retry.remove();nameForms(target,data.id,current.token,data.players)}).catch(err=>{note.textContent=String(err);retry.disabled=false})};note.append(retry);});}}
   }
   update(_time:number,delta:number){
     if(document.querySelector<HTMLElement>('#play-screen')!.hidden)return;
@@ -309,7 +309,7 @@ class Adventure extends Phaser.Scene {
       if(!item.passed&&Math.abs(item.x-160)<(item.kind==='bonus'?30:28)){if(item.kind==='obstacle'&&obstacleCollision(r.y,r.ducking,item.obstacle)){item.passed=true;if(hit(p,this.elapsed))beep(150);}else if(item.kind==='bonus'&&(item.obstacle==='overhead'?r.ducking&&r.y===0:r.y<-35&&r.y>-146)){award(p,25);item.passed=true;item.icon.setVisible(false);beep(850);}}
       if(!item.passed&&item.x<120){if(item.kind==='obstacle')award(p,10);item.passed=true;}
     }
-    this.items=this.items.filter(item=>{if(item.x<-50){item.icon.destroy();return false;}return true;});this.hud();if(this.elapsed>=LEVEL_SECONDS*1000)this.finish();
+    this.items=this.items.filter(item=>{if(item.x<-50){item.icon.destroy();return false;}return true;});this.hud();if(this.elapsed>=LEVEL_SECONDS*1000||this.players.every(p=>p.lives===0))this.finish();
   }
 }
 export const game = new Phaser.Game({type:Phaser.AUTO,parent:'game',width:1100,height:530,backgroundColor:'#f8dfea',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:Adventure,render:{antialias:true},input:{activePointers:3}});

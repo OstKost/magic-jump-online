@@ -17,16 +17,17 @@ type Action struct {
 	Pressed bool   `json:"pressed"`
 }
 type Body struct {
-	Lives     int     `json:"lives"`
-	Score     int     `json:"score"`
-	Y         float64 `json:"y"`
-	Velocity  float64 `json:"velocity"`
-	Duck      bool    `json:"duck"`
-	Held      bool    `json:"-"`
-	Immune    int     `json:"-"`
-	Hero      int     `json:"hero"`
-	Connected bool    `json:"connected"`
-	Eligible  bool    `json:"eligible"`
+	Lives      int     `json:"lives"`
+	Score      int     `json:"score"`
+	RoundScore int     `json:"roundScore"`
+	Y          float64 `json:"y"`
+	Velocity   float64 `json:"velocity"`
+	Duck       bool    `json:"duck"`
+	Held       bool    `json:"-"`
+	Immune     int     `json:"-"`
+	Hero       int     `json:"hero"`
+	Connected  bool    `json:"connected"`
+	Eligible   bool    `json:"eligible"`
 }
 type Object struct {
 	Event
@@ -147,6 +148,7 @@ func (e *Engine) step() {
 				points = points * 8 / 10
 			}
 			p.Score += points
+			p.RoundScore += points
 		}
 		threshold := 28.
 		if o.Kind == "bonus" {
@@ -179,4 +181,13 @@ func (e *Engine) step() {
 		}
 	}
 	e.Items = kept
+}
+
+func (e *Engine) allDead() bool {
+	for _, p := range e.Players {
+		if p.Eligible && p.Lives > 0 {
+			return false
+		}
+	}
+	return true
 }

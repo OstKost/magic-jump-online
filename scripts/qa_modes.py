@@ -16,10 +16,12 @@ with sync_playwright() as p:
  local.wait_for_function('scene.runners.length===1&&scene.playing',timeout=15000)
  local.keyboard.press('ArrowUp');local.wait_for_function('scene.runners[0].y<0')
  local.screenshot(path=str(OUT/'solo.png'))
- local.evaluate('scene.players[0].lives=0');local.wait_for_function('scene.runners[0].y===0');local.keyboard.press('w');local.wait_for_function('scene.runners[0].y<0&&scene.playing')
- local.screenshot(path=str(OUT/'ghost.png'))
- local.keyboard.press('Escape');local.locator('#pause-home').click();local.locator('#play-menu').click();local.locator('#confirm-character').click();local.locator('#confirm-character').click();assert local.locator('[data-ready]').count()==2
+ local.evaluate('scene.players[0].lives=0');local.locator('#result').wait_for();assert local.locator('#result').evaluate('(el)=>el.classList.contains("is-defeat")')
+ local.locator('#result-menu').click();local.locator('#play-menu').click();local.locator('#confirm-character').click();local.locator('#confirm-character').click();assert local.locator('[data-ready]').count()==2
  local.locator('[data-ready="0"]').click();local.wait_for_timeout(100);assert local.evaluate('!scene.playing');local.locator('[data-ready="1"]').click();local.wait_for_function('scene.runners.length===2&&scene.playing',timeout=15000);local.screenshot(path=str(OUT/'local-two.png'))
+ local.evaluate('scene.players[0].lives=0');local.wait_for_function('scene.runners[0].y===0');local.keyboard.press('w');local.wait_for_function('scene.runners[0].y<0&&scene.playing');local.screenshot(path=str(OUT/'ghost.png'))
+ local.evaluate('scene.players[1].lives=0');local.locator('#result').wait_for();assert local.locator('#result').evaluate('(el)=>el.classList.contains("is-defeat")')
+ local.locator('#result-next').click();assert local.evaluate('scene.level===0&&scene.players.every(p=>p.lives===3)&&scene.players.every(p=>p.score===0)')
  local.context.close()
  print('online modes',flush=True)
  tabs=[page() for _ in range(4)]

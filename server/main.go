@@ -339,16 +339,19 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		case "ready":
-			if room.Phase == "lobby" || room.Phase == "between" {
+			if room.Phase == "lobby" || room.Phase == "between" || room.Phase == "failed" {
 				member.Ready = true
 			}
 		case "start":
-			if room.Host == member.ID && (room.Phase == "lobby" || room.Phase == "between") && len(room.Members) >= 2 {
+			if room.Host == member.ID && (room.Phase == "lobby" || room.Phase == "between" || room.Phase == "failed") && len(room.Members) >= 2 {
 				ready := true
 				var heroes, totals []int
 				level := 0
 				if room.Engine != nil {
 					level = room.Engine.Level + 1
+					if room.Phase == "failed" {
+						level = room.Engine.Level
+					}
 				}
 				for i, m := range room.Members {
 					if room.Engine == nil || room.Engine.Players[i].Eligible {
@@ -356,7 +359,11 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 					}
 					heroes = append(heroes, m.Hero)
 					if room.Engine != nil {
-						totals = append(totals, room.Engine.Players[i].Score)
+						score := room.Engine.Players[i].Score
+						if room.Phase == "failed" {
+							score -= room.Engine.Players[i].RoundScore
+						}
+						totals = append(totals, score)
 					}
 				}
 				if ready && level < 3 {
@@ -438,9 +445,12 @@ func (s *Server) loop(stop <-chan struct{}) {
 						room.Engine.Players[i].Connected = m.Connected
 					}
 					room.Engine.step()
-					if room.Engine.Tick >= 3000 {
+					if room.Engine.Tick >= 3000 || room.Engine.allDead() {
 						room.Phase = "between"
-						if room.Engine.Level == 2 {
+						if room.Engine.allDead() {
+							room.Phase = "failed"
+						}
+						if room.Engine.Level == 2 && room.Phase != "failed" {
 							room.Phase = "finished"
 							room.finished = now
 							s.record(room.ID, room.Engine.Players, now)
@@ -450,7 +460,7 @@ func (s *Server) loop(stop <-chan struct{}) {
 						}
 					}
 				}
-				if room.Engine == nil || room.Engine.Tick%3 == 0 {
+				if room.Engine == nil || room.Phase != "playing" || room.Engine.Tick%3 == 0 {
 					s.broadcast(room)
 				}
 			}
@@ -539,6 +549,10 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 				next++
 			}
 			engine.step()
+			if engine.allDead() {
+				http.Error(w, "Путешествие завершилось поражением", 400)
+				return
+			}
 		}
 		totals = nil
 		for _, p := range engine.Players {

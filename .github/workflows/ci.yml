@@ -1,0 +1,75 @@
+name: Check and deploy
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: jump-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - run: npm ci
+      - run: npm test && npm run build
+      - run: node --experimental-strip-types scripts/generate-rules-fixture.ts && git diff --exit-code server/testdata/rules.json
+      - run: go test -race ./... && go vet ./...
+        working-directory: server
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install playwright && playwright install --with-deps chromium
+      - name: Browser smoke
+        run: |
+          (cd server && go run .) > /tmp/jump-server.log 2>&1 &
+          npm run dev > /tmp/jump-vite.log 2>&1 &
+          for n in $(seq 1 60); do curl -fsS http://localhost:5173/api/health && break || sleep 1; done
+          python scripts/qa_modes.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-screenshots
+          path: artifacts/qa/
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t jump:${{ github.sha }} .
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.M0_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.M0_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/*
+      - name: Upload and release
+        id: release
+        run: |
+          docker save jump:${{ github.sha }} | gzip | ssh root@176.53.174.118 'gzip -d | docker load'
+          scp deploy/compose.yaml deploy/release.sh deploy/backup.sh root@176.53.174.118:/opt/magic-jump/
+          ssh root@176.53.174.118 'sh /opt/magic-jump/release.sh jump:${{ github.sha }}'
+      - name: Verify public endpoint and WebSocket
+        run: |
+          curl --fail --retry 5 https://jump.ost.wang/api/health
+          python scripts/check_public.py https://jump.ost.wang
+      - name: Roll back failed public check
+        if: failure() && steps.release.outcome == 'success'
+        run: ssh root@176.53.174.118 'cd /opt/magic-jump; if test -f previous-image; then sh release.sh "$(cat previous-image)"; fi'

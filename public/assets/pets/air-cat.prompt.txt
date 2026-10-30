@@ -1,0 +1,2 @@
+Tool: built-in image_gen
+Use case: stylized-concept. Asset: transparent game pet illustration. One adorable white kitten with pale gray ear tips, bright turquoise eyes and a flowing teal scarf, companion of an air element hero. Match the painted anime chibi cat style in the reference. Three quarter side view facing right, standing on all four paws, full body and long curved tail entirely visible, clean silhouette, paws on same baseline. A single cat only. No magical particles, ground, shadow, text or frame. Transparent background.

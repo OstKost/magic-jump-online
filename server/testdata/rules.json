@@ -1,0 +1,1159 @@
+{
+  "seed": 42,
+  "routes": [
+    [
+      {
+        "at": 2200,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 10383.504875889048,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 10383.504875889048,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 12501.033719419502,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 14866.095512988977,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 14866.095512988977,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 16951.451371936128,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 16951.451371936128,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 18832.728129532188,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 18832.728129532188,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 20641.433865600266,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 20641.433865600266,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 22383.927279920317,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 22383.927279920317,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 24664.899465069175,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 24664.899465069175,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 26631.43012379296,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 26631.43012379296,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 28829.385899635963,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 28829.385899635963,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 30844.212894304655,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 32857.37792556174,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 32857.37792556174,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 34972.98225592822,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 34972.98225592822,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 36824.020615336485,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38718.600912136026,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38718.600912136026,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 41087.71556625143,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 41087.71556625143,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 43195.34162799828,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 43195.34162799828,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 44985.893119103275,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 47330.95269992482,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 47330.95269992482,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 49527.99488878809,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 51584.45833446458,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 53707.32493198011,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 53707.32493198011,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 55554.09689026419,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 55554.09689026419,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      }
+    ],
+    [
+      {
+        "at": 2200,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 2200,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 10383.504875889048,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 12501.033719419502,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 12501.033719419502,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 14866.095512988977,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 14866.095512988977,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 16951.451371936128,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 16951.451371936128,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 18832.728129532188,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 18832.728129532188,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 20641.433865600266,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 20641.433865600266,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 22383.927279920317,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 22383.927279920317,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 24664.899465069175,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 24664.899465069175,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 26631.43012379296,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 26631.43012379296,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 28829.385899635963,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 30844.212894304655,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 30844.212894304655,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 32857.37792556174,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 32857.37792556174,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 34972.98225592822,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 36824.020615336485,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 36824.020615336485,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38718.600912136026,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38718.600912136026,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 41087.71556625143,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 41087.71556625143,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 43195.34162799828,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 44985.893119103275,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 44985.893119103275,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 47330.95269992482,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      },
+      {
+        "at": 49527.99488878809,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 51584.45833446458,
+        "kind": "obstacle",
+        "variant": 2,
+        "obstacle": "ground"
+      },
+      {
+        "at": 51584.45833446458,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 53707.32493198011,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 53707.32493198011,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 55554.09689026419,
+        "kind": "obstacle",
+        "variant": 1,
+        "obstacle": "ground"
+      }
+    ]
+  ],
+  "logs": [
+    {
+      "tick": 0,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 0,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 44,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 83,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 101,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 145,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 166,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 202,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 246,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 249,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 303,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 332,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 347,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 404,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 415,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 448,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 498,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 505,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 549,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 581,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 606,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 650,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 664,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 707,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 747,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 751,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 808,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 830,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 852,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 909,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 913,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 953,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 996,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1010,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1054,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1079,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1111,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1155,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1162,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1212,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1245,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1256,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1313,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1328,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1357,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1411,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1414,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1458,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1494,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1515,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1559,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1577,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1616,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1660,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1660,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1717,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1743,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1761,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1818,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1826,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1862,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1909,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 1919,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 1963,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 1992,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2020,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2064,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2075,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2121,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2158,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2165,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2222,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2241,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2266,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2323,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2324,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2367,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2407,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2424,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2468,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2490,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2525,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2569,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2573,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2626,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2656,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2670,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2727,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2739,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2771,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2822,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2828,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2872,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2905,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    },
+    {
+      "tick": 2929,
+      "player": 1,
+      "kind": "duck",
+      "pressed": true
+    },
+    {
+      "tick": 2973,
+      "player": 1,
+      "kind": "duck",
+      "pressed": false
+    },
+    {
+      "tick": 2988,
+      "player": 0,
+      "kind": "jump",
+      "pressed": true
+    }
+  ],
+  "players": [
+    {
+      "lives": 0,
+      "score": 104,
+      "roundScore": 104,
+      "invulnerable": 10600
+    },
+    {
+      "lives": 0,
+      "score": 140,
+      "roundScore": 140,
+      "invulnerable": 10600
+    }
+  ]
+}

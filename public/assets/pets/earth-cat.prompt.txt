@@ -1,0 +1,2 @@
+Tool: built-in image_gen
+Use case: stylized-concept. Asset: transparent game pet illustration. One adorable warm brown tabby kitten with amber eyes and a jade green neck scarf, companion of an earth element hero. Match the painted anime chibi cat style in the reference. Three quarter side view facing right, standing on all four paws, full body and curved tail entirely visible, clean silhouette, paws on same baseline. A single cat only. No magical particles, ground, shadow, text or frame. Transparent background.

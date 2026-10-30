@@ -1,0 +1,595 @@
+{
+  "source": "pics/ sprite-2.png",
+  "frameSize": 256,
+  "origin": {
+    "x": 0.5,
+    "y": 0.9375
+  },
+  "characters": {
+    "air": {
+      "player": 3,
+      "animations": {
+        "run": [
+          "run-00",
+          "run-01",
+          "run-02",
+          "run-03",
+          "run-04",
+          "run-05"
+        ],
+        "jump": [
+          "jump-00",
+          "jump-01",
+          "jump-02",
+          "jump-03",
+          "jump-04"
+        ],
+        "idle": [
+          "idle-00",
+          "idle-01",
+          "idle-02"
+        ],
+        "duck": [
+          "duck-00",
+          "duck-01"
+        ],
+        "hit": [
+          "hit-00",
+          "hit-01",
+          "hit-02"
+        ]
+      },
+      "frameRate": {
+        "run": 10,
+        "jump": 6,
+        "idle": 3,
+        "duck": 8,
+        "hit": 5
+      },
+      "sourceRects": {
+        "run": [
+          [
+            346,
+            45,
+            429,
+            152
+          ],
+          [
+            429,
+            45,
+            510,
+            152
+          ],
+          [
+            510,
+            45,
+            591,
+            152
+          ],
+          [
+            591,
+            45,
+            675,
+            152
+          ],
+          [
+            675,
+            45,
+            773,
+            152
+          ],
+          [
+            773,
+            45,
+            869,
+            152
+          ]
+        ],
+        "jump": [
+          [
+            354,
+            213,
+            452,
+            306
+          ],
+          [
+            452,
+            201,
+            543,
+            306
+          ],
+          [
+            543,
+            174,
+            650,
+            288
+          ],
+          [
+            650,
+            200,
+            763,
+            306
+          ],
+          [
+            763,
+            226,
+            872,
+            306
+          ]
+        ],
+        "idle": [
+          [
+            385,
+            350,
+            438,
+            460
+          ],
+          [
+            445,
+            350,
+            511,
+            460
+          ],
+          [
+            521,
+            350,
+            581,
+            460
+          ]
+        ],
+        "duck": [
+          [
+            602,
+            374,
+            690,
+            458
+          ],
+          [
+            690,
+            365,
+            866,
+            458
+          ]
+        ],
+        "hit": [
+          [
+            387,
+            509,
+            489,
+            589
+          ],
+          [
+            489,
+            499,
+            642,
+            583
+          ],
+          [
+            642,
+            484,
+            866,
+            583
+          ]
+        ]
+      }
+    },
+    "earth": {
+      "player": 4,
+      "animations": {
+        "run": [
+          "run-00",
+          "run-01",
+          "run-02",
+          "run-03",
+          "run-04",
+          "run-05"
+        ],
+        "jump": [
+          "jump-00",
+          "jump-01",
+          "jump-02",
+          "jump-03",
+          "jump-04"
+        ],
+        "idle": [
+          "idle-00",
+          "idle-01",
+          "idle-02"
+        ],
+        "duck": [
+          "duck-00",
+          "duck-01"
+        ],
+        "hit": [
+          "hit-00",
+          "hit-01",
+          "hit-02"
+        ]
+      },
+      "frameRate": {
+        "run": 10,
+        "jump": 6,
+        "idle": 3,
+        "duck": 8,
+        "hit": 5
+      },
+      "sourceRects": {
+        "run": [
+          [
+            1231,
+            45,
+            1309,
+            150
+          ],
+          [
+            1309,
+            45,
+            1398,
+            150
+          ],
+          [
+            1398,
+            45,
+            1485,
+            150
+          ],
+          [
+            1485,
+            45,
+            1577,
+            150
+          ],
+          [
+            1577,
+            45,
+            1669,
+            150
+          ],
+          [
+            1669,
+            45,
+            1760,
+            150
+          ]
+        ],
+        "jump": [
+          [
+            1247,
+            218,
+            1336,
+            305
+          ],
+          [
+            1336,
+            188,
+            1445,
+            305
+          ],
+          [
+            1445,
+            170,
+            1555,
+            305
+          ],
+          [
+            1555,
+            188,
+            1662,
+            305
+          ],
+          [
+            1662,
+            218,
+            1757,
+            305
+          ]
+        ],
+        "idle": [
+          [
+            1268,
+            351,
+            1328,
+            459
+          ],
+          [
+            1334,
+            351,
+            1391,
+            459
+          ],
+          [
+            1404,
+            351,
+            1462,
+            459
+          ]
+        ],
+        "duck": [
+          [
+            1484,
+            372,
+            1573,
+            458
+          ],
+          [
+            1573,
+            372,
+            1759,
+            458
+          ]
+        ],
+        "hit": [
+          [
+            1263,
+            508,
+            1391,
+            592
+          ],
+          [
+            1391,
+            508,
+            1536,
+            592
+          ],
+          [
+            1536,
+            490,
+            1760,
+            592
+          ]
+        ]
+      }
+    }
+  },
+  "extras": {
+    "characters/air/portrait-00.png": {
+      "sourceRect": [
+        301,
+        627,
+        369,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/portrait-01.png": {
+      "sourceRect": [
+        369,
+        627,
+        438,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/portrait-02.png": {
+      "sourceRect": [
+        438,
+        627,
+        505,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/portrait-03.png": {
+      "sourceRect": [
+        505,
+        627,
+        574,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/back-00.png": {
+      "sourceRect": [
+        591,
+        628,
+        663,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/back-01.png": {
+      "sourceRect": [
+        663,
+        628,
+        734,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/back-02.png": {
+      "sourceRect": [
+        734,
+        628,
+        802,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/air/back-03.png": {
+      "sourceRect": [
+        802,
+        628,
+        868,
+        724
+      ],
+      "trimmed": true
+    },
+    "characters/earth/portrait-00.png": {
+      "sourceRect": [
+        1038,
+        633,
+        1107,
+        730
+      ],
+      "trimmed": true
+    },
+    "characters/earth/portrait-01.png": {
+      "sourceRect": [
+        1107,
+        633,
+        1179,
+        730
+      ],
+      "trimmed": true
+    },
+    "characters/earth/portrait-02.png": {
+      "sourceRect": [
+        1179,
+        633,
+        1250,
+        730
+      ],
+      "trimmed": true
+    },
+    "characters/earth/portrait-03.png": {
+      "sourceRect": [
+        1250,
+        633,
+        1323,
+        730
+      ],
+      "trimmed": true
+    },
+    "characters/earth/portrait-04.png": {
+      "sourceRect": [
+        1323,
+        633,
+        1403,
+        730
+      ],
+      "trimmed": true
+    },
+    "characters/earth/back-00.png": {
+      "sourceRect": [
+        1436,
+        636,
+        1516,
+        731
+      ],
+      "trimmed": true
+    },
+    "characters/earth/back-01.png": {
+      "sourceRect": [
+        1516,
+        636,
+        1597,
+        731
+      ],
+      "trimmed": true
+    },
+    "characters/earth/back-02.png": {
+      "sourceRect": [
+        1597,
+        636,
+        1670,
+        731
+      ],
+      "trimmed": true
+    },
+    "characters/earth/back-03.png": {
+      "sourceRect": [
+        1670,
+        636,
+        1744,
+        731
+      ],
+      "trimmed": true
+    },
+    "obstacles/air/lantern.png": {
+      "sourceRect": [
+        492,
+        769,
+        605,
+        859
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/air/stakes.png": {
+      "sourceRect": [
+        645,
+        774,
+        729,
+        859
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/air/rocks.png": {
+      "sourceRect": [
+        730,
+        790,
+        811,
+        859
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/air/banner.png": {
+      "sourceRect": [
+        810,
+        738,
+        879,
+        859
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/earth/rock-log.png": {
+      "sourceRect": [
+        1385,
+        774,
+        1552,
+        861
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/earth/stakes.png": {
+      "sourceRect": [
+        1552,
+        776,
+        1625,
+        861
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/earth/lantern.png": {
+      "sourceRect": [
+        1625,
+        774,
+        1694,
+        861
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    },
+    "obstacles/earth/banner.png": {
+      "sourceRect": [
+        1694,
+        740,
+        1766,
+        861
+      ],
+      "origin": {
+        "x": 0.5,
+        "y": 0.9166666666666666
+      }
+    }
+  }
+}

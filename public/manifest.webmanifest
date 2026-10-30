@@ -1,0 +1,49 @@
+{
+  "id": "/",
+  "name": "Волшебный Прыжок Онлайн",
+  "short_name": "Волшебный Прыжок",
+  "description": "Красочный платформер для двух игроков на одном устройстве со стихийной магией и верными котиками-спутниками.",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#132431",
+  "theme_color": "#132431",
+  "categories": ["games", "arcade"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Волшебный Прыжок Онлайн — игра вдвоём на одном экране"
+    }
+  ]
+}

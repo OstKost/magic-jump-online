@@ -1,0 +1,4 @@
+Tool: built-in image_gen
+Reference: public/art/menu.png
+
+Use case: stylized-concept. Create a new landscape game background based on reference image. Preserve both heroines' identities, blue water heroine with braid and red fire heroine with dark hair, fantasy painterly anime style, mountain temples, water and fire ribbons, cats. Remove ALL lettering, logo, menu buttons, symbols and interface from the image. Recompose with both heroines entirely visible head to feet within the right 65% of a wide 3:2 frame, with breathing room around all limbs. Left 35% is quiet dark blue mountainous scenery, empty negative space for a real HTML menu. No text, no interface, no watermark. Detailed polished game key art.

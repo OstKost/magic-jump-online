@@ -1,0 +1,75 @@
+{
+  "frameSize": 256,
+  "origin": {
+    "x": 0.5,
+    "y": 0.9375
+  },
+  "characters": {
+    "sofia": {
+      "animations": {
+        "run": [
+          "run-00",
+          "run-01",
+          "run-02",
+          "run-03",
+          "run-04",
+          "run-05",
+          "run-06",
+          "run-07"
+        ],
+        "jump": [
+          "jump-00",
+          "jump-01",
+          "jump-02"
+        ],
+        "idle": [
+          "idle-00"
+        ],
+        "duck": [
+          "duck-00",
+          "duck-01",
+          "duck-02"
+        ],
+        "hit": [
+          "hit-01",
+          "hit-00"
+        ]
+      },
+      "source": "generated/sofia-clean-sheet.png",
+      "uniformScale": 0.4605263157894737
+    },
+    "stella": {
+      "animations": {
+        "run": [
+          "run-00",
+          "run-01",
+          "run-02",
+          "run-03",
+          "run-04",
+          "run-05",
+          "run-06",
+          "run-07"
+        ],
+        "jump": [
+          "jump-00",
+          "jump-01",
+          "jump-02"
+        ],
+        "idle": [
+          "idle-00"
+        ],
+        "duck": [
+          "duck-00",
+          "duck-01",
+          "duck-02"
+        ],
+        "hit": [
+          "hit-01",
+          "hit-00"
+        ]
+      },
+      "source": "generated/stella-clean-sheet.png",
+      "uniformScale": 0.45161290322580644
+    }
+  }
+}

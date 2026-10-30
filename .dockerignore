@@ -4,3 +4,4 @@ dist
 pics
 artifacts
 server/*.sqlite*
+concept

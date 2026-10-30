@@ -1,7 +1,7 @@
 """Smoke checks for local modes and four independent online browsers."""
 import os
 from pathlib import Path
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 BASE=os.environ.get('JOURNEY_QA_URL','http://localhost:5173')
 OUT=Path('artifacts/qa');OUT.mkdir(parents=True,exist_ok=True)
 with sync_playwright() as p:
@@ -29,6 +29,12 @@ with sync_playwright() as p:
  print('joining friends',flush=True)
  for tab in tabs[1:]:
   tab.locator('#online-menu').click();tab.locator('#room-code').fill(code);tab.locator('#join-room button').click();tab.locator('#online-ready').wait_for()
+ print('choosing matching heroes',flush=True)
+ for tab in tabs:
+  assert tab.locator('[data-online-hero]').count()==4
+  tab.locator('[data-online-hero="0"]').click()
+  expect(tab.locator('[data-online-hero="0"]')).to_have_attribute('aria-pressed','true')
+ tabs[0].screenshot(path=str(OUT/'online-lobby.png'))
  print('readying all four',flush=True)
  for tab in tabs:tab.locator('#online-ready').click()
  tabs[0].locator('#online-start').click();tabs[0].locator('#online-match').wait_for();tabs[0].wait_for_timeout(1000)

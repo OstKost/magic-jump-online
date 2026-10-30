@@ -327,13 +327,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 		switch msg.Type {
 		case "hero":
 			if room.Phase == "lobby" && msg.Hero >= 0 && msg.Hero < 4 {
-				free := true
-				for _, m := range room.Members {
-					if m != member && m.Hero == msg.Hero {
-						free = false
-					}
-				}
-				if free {
+				if member.Hero != msg.Hero {
 					member.Hero = msg.Hero
 					member.Ready = false
 				}

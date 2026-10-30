@@ -160,6 +160,22 @@ func TestRoomLimitAndSocketAuth(t *testing.T) {
 	if strings.Contains(string(mustJSON(room)), created["token"]) {
 		t.Fatal("credential exposed")
 	}
+	// A hero already selected by another participant must remain selectable online.
+	_ = c.WriteJSON(map[string]any{"type": "ready"})
+	if err = c.ReadJSON(&room); err != nil || !room.Members[0].Ready {
+		t.Fatal("ready failed", err)
+	}
+	_ = c.WriteJSON(map[string]any{"type": "hero", "hero": 3})
+	if err = c.ReadJSON(&room); err != nil {
+		t.Fatal(err)
+	}
+	if room.Members[0].Hero != 3 || room.Members[3].Hero != 3 || room.Members[0].Ready {
+		t.Fatal("duplicate hero must be accepted and changing hero must reset ready")
+	}
+	_ = c.WriteJSON(map[string]any{"type": "hero", "hero": 4})
+	if err = c.ReadJSON(&room); err != nil || room.Members[0].Hero != 3 {
+		t.Fatal("invalid hero must be rejected", err)
+	}
 }
 func mustJSON(v any) []byte { b, _ := json.Marshal(v); return b }
 func TestRejectIncompleteReplay(t *testing.T) {

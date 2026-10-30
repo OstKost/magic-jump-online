@@ -46,7 +46,7 @@ type Engine struct {
 func schedule(seed uint32) []Event {
 	random := func() float64 { seed = seed*1664525 + 1013904223; return float64(seed) / 4294967296 }
 	var out []Event
-	for at := 2200.; at < 57000; at += 1700 + random()*700 {
+	for at := 2200.; at < 55000; at += 1700 + random()*700 {
 		v := int(random() * 4)
 		obstacle := "ground"
 		if v == 3 {

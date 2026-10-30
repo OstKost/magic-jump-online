@@ -265,18 +265,6 @@
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
-      },
-      {
-        "at": 55554.09689026419,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 55554.09689026419,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "ground"
       }
     ],
     [
@@ -540,18 +528,6 @@
       },
       {
         "at": 53707.32493198011,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 53707.32493198011,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 55554.09689026419,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"

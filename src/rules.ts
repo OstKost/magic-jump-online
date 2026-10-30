@@ -24,7 +24,7 @@ export function schedule(seed: number): Spawn[] {
   let state = seed >>> 0;
   const random = () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296; };
   const result: Spawn[] = [];
-  for (let at = 2200; at < 57000; at += 1700 + random() * 700) {
+  for (let at = 2200; at < 55000; at += 1700 + random() * 700) {
     const variant = Math.floor(random() * 4);
     result.push({ at, kind: 'obstacle', variant: variant % 3, obstacle: variant === 3 ? 'overhead' : 'ground' });
     if (random() > .25) result.push({ at, kind: 'bonus', variant: 0, obstacle: variant === 3 ? 'overhead' : 'ground' });

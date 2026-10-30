@@ -11,15 +11,15 @@ with sync_playwright() as p:
   ctx=browser.new_context(viewport={'width':844,'height':390});ctx.route('https://fonts.googleapis.com/**',lambda route:route.abort());ctx.route('https://fonts.gstatic.com/**',lambda route:route.abort())
   print('new browser',flush=True);tab=ctx.new_page();tab.set_default_timeout(15000);tab.on('pageerror',lambda e:errors.append(str(e)));tab.goto(BASE,wait_until='domcontentloaded');tab.wait_for_timeout(1200);tab.keyboard.press('Space');tab.wait_for_timeout(800);print('browser ready',flush=True);return tab
  print('local modes',flush=True)
- local=page();local.locator('#solo-menu').click();local.locator('#confirm-character').click();local.locator('[data-ready="0"]').click();local.wait_for_timeout(1400)
+ local=page();local.locator('#solo-menu').click();local.locator('#confirm-character').click();local.locator('[data-ready="0"]').click();local.wait_for_timeout(200)
  local.evaluate('''async()=>{const {game}=await import(document.querySelector('script[src*="/src/main.ts"]').src);window.scene=game.scene.scenes[0]}''')
- assert local.evaluate('scene.runners.length===1&&scene.playing')
- local.keyboard.press('ArrowUp');local.wait_for_timeout(100);assert local.evaluate('scene.runners[0].y<0')
+ local.wait_for_function('scene.runners.length===1&&scene.playing',timeout=15000)
+ local.keyboard.press('ArrowUp');local.wait_for_function('scene.runners[0].y<0')
  local.screenshot(path=str(OUT/'solo.png'))
- local.evaluate('scene.players[0].lives=0');local.wait_for_timeout(800);local.keyboard.press('w');local.wait_for_timeout(100);assert local.evaluate('scene.runners[0].y<0&&scene.playing')
+ local.evaluate('scene.players[0].lives=0');local.wait_for_function('scene.runners[0].y===0');local.keyboard.press('w');local.wait_for_function('scene.runners[0].y<0&&scene.playing')
  local.screenshot(path=str(OUT/'ghost.png'))
  local.keyboard.press('Escape');local.locator('#pause-home').click();local.locator('#play-menu').click();local.locator('#confirm-character').click();local.locator('#confirm-character').click();assert local.locator('[data-ready]').count()==2
- local.locator('[data-ready="0"]').click();local.wait_for_timeout(100);assert local.evaluate('!scene.playing');local.locator('[data-ready="1"]').click();local.wait_for_timeout(1000);assert local.evaluate('scene.runners.length===2&&scene.playing');local.screenshot(path=str(OUT/'local-two.png'))
+ local.locator('[data-ready="0"]').click();local.wait_for_timeout(100);assert local.evaluate('!scene.playing');local.locator('[data-ready="1"]').click();local.wait_for_function('scene.runners.length===2&&scene.playing',timeout=15000);local.screenshot(path=str(OUT/'local-two.png'))
  local.context.close()
  print('online modes',flush=True)
  tabs=[page() for _ in range(4)]

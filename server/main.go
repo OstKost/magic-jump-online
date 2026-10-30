@@ -34,24 +34,26 @@ type Member struct {
 	lastInput time.Time
 }
 type Room struct {
-	Code     string    `json:"code"`
-	Host     string    `json:"host"`
-	Phase    string    `json:"phase"`
-	Members  []*Member `json:"members"`
-	Engine   *Engine   `json:"engine,omitempty"`
-	ID       string    `json:"id"`
-	Seed     uint32    `json:"seed"`
-	created  time.Time
-	finished time.Time
+	Code       string    `json:"code"`
+	Host       string    `json:"host"`
+	Phase      string    `json:"phase"`
+	Difficulty string    `json:"difficulty"`
+	Members    []*Member `json:"members"`
+	Engine     *Engine   `json:"engine,omitempty"`
+	ID         string    `json:"id"`
+	Seed       uint32    `json:"seed"`
+	created    time.Time
+	finished   time.Time
 }
 type Attempt struct {
-	ID      string `json:"id"`
-	Token   string `json:"token"`
-	Seed    uint32 `json:"seed"`
-	Count   int    `json:"count"`
-	created time.Time
-	done    bool
-	players []Body
+	ID         string `json:"id"`
+	Token      string `json:"token"`
+	Seed       uint32 `json:"seed"`
+	Count      int    `json:"count"`
+	Difficulty string `json:"difficulty,omitempty"`
+	created    time.Time
+	done       bool
+	players    []Body
 }
 type Server struct {
 	mu       sync.Mutex
@@ -178,8 +180,18 @@ func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	diff := "medium"
+	var req struct {
+		Difficulty string `json:"difficulty"`
+	}
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		if req.Difficulty == "easy" || req.Difficulty == "medium" || req.Difficulty == "hard" {
+			diff = req.Difficulty
+		}
+	}
 	m := &Member{ID: token(), token: token(), Hero: 0, gone: time.Now()}
-	room := &Room{Code: code, Host: m.ID, Phase: "lobby", Members: []*Member{m}, ID: token(), Seed: seed(), created: time.Now()}
+	room := &Room{Code: code, Host: m.ID, Phase: "lobby", Difficulty: diff, Members: []*Member{m}, ID: token(), Seed: seed(), created: time.Now()}
 	s.rooms[code] = room
 	send(w, map[string]any{"code": code, "token": m.token, "id": m.ID})
 }
@@ -294,9 +306,10 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 	for {
 		_ = c.SetReadDeadline(time.Now().Add(45 * time.Second))
 		var msg struct {
-			Type    string `json:"type"`
-			Hero    int    `json:"hero"`
-			Pressed bool   `json:"pressed"`
+			Type       string `json:"type"`
+			Hero       int    `json:"hero"`
+			Pressed    bool   `json:"pressed"`
+			Difficulty string `json:"difficulty"`
 		}
 		if c.ReadJSON(&msg) != nil {
 			return
@@ -325,8 +338,14 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		switch msg.Type {
+		case "difficulty":
+			if room.Host == member.ID && room.Phase == "lobby" {
+				if msg.Difficulty == "easy" || msg.Difficulty == "medium" || msg.Difficulty == "hard" {
+					room.Difficulty = msg.Difficulty
+				}
+			}
 		case "hero":
-			if room.Phase == "lobby" && msg.Hero >= 0 && msg.Hero < 4 {
+			if room.Phase == "lobby" && msg.Hero >= 0 && msg.Hero < 6 {
 				if member.Hero != msg.Hero {
 					member.Hero = msg.Hero
 					member.Ready = false
@@ -362,7 +381,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 				}
 				if ready && level < 3 {
 					previous := room.Engine
-					room.Engine = newEngine(room.Seed, level, heroes, totals)
+					room.Engine = newEngineWithDifficulty(room.Seed, level, heroes, totals, room.Difficulty)
 					if previous != nil {
 						for i := range room.Engine.Players {
 							room.Engine.Players[i].Eligible = previous.Players[i].Eligible
@@ -439,15 +458,27 @@ func (s *Server) loop(stop <-chan struct{}) {
 						room.Engine.Players[i].Connected = m.Connected
 					}
 					room.Engine.step()
-					if room.Engine.Tick >= 3000 || room.Engine.allDead() {
-						room.Phase = "between"
-						if room.Engine.allDead() {
-							room.Phase = "failed"
+					maxTicks := 2000
+					if room.Difficulty == "easy" {
+						maxTicks = 1000
+					} else if room.Difficulty == "hard" {
+						maxTicks = 2500
+					}
+					if room.Engine.Tick >= maxTicks || room.Engine.allDead() {
+						diff := room.Difficulty
+						if diff == "" {
+							diff = "medium"
 						}
-						if room.Engine.Level == 2 && room.Phase != "failed" {
+						if room.Engine.allDead() {
 							room.Phase = "finished"
 							room.finished = now
-							s.record(room.ID, room.Engine.Players, now)
+							s.record(room.ID, room.Engine.Players, now, diff)
+						} else if room.Engine.Level == 2 {
+							room.Phase = "finished"
+							room.finished = now
+							s.record(room.ID, room.Engine.Players, now, diff)
+						} else {
+							room.Phase = "between"
 						}
 						for _, m := range room.Members {
 							m.Ready = false
@@ -469,7 +500,8 @@ func (s *Server) loop(stop <-chan struct{}) {
 }
 func (s *Server) createAttempt(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Count int `json:"count"`
+		Count      int    `json:"count"`
+		Difficulty string `json:"difficulty"`
 	}
 	if !decode(w, r, &req) {
 		return
@@ -478,13 +510,20 @@ func (s *Server) createAttempt(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Недопустимое число игроков", 400)
 		return
 	}
+	if req.Difficulty == "" {
+		req.Difficulty = "medium"
+	}
+	if req.Difficulty != "easy" && req.Difficulty != "medium" && req.Difficulty != "hard" {
+		http.Error(w, "Недопустимая сложность", 400)
+		return
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if len(s.attempts) >= 10000 {
 		http.Error(w, "Сервер занят", 503)
 		return
 	}
-	a := &Attempt{ID: token(), Token: token(), Seed: seed(), Count: req.Count, created: time.Now()}
+	a := &Attempt{ID: token(), Token: token(), Seed: seed(), Count: req.Count, Difficulty: req.Difficulty, created: time.Now()}
 	s.attempts[a.ID] = a
 	send(w, a)
 }
@@ -508,13 +547,25 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 		send(w, map[string]any{"id": a.ID, "players": a.players})
 		return
 	}
-	if time.Since(a.created) < 180*time.Second || time.Since(a.created) > 2*time.Hour || len(req.Heroes) != a.Count || len(req.Logs) != 3 {
+	minElapsed := 180 * time.Second
+	maxTicks := 3000
+	if a.Difficulty == "easy" {
+		minElapsed = 45 * time.Second
+		maxTicks = 1000
+	} else if a.Difficulty == "medium" {
+		minElapsed = 90 * time.Second
+		maxTicks = 2000
+	} else if a.Difficulty == "hard" {
+		minElapsed = 115 * time.Second
+		maxTicks = 2500
+	}
+	if time.Since(a.created) < minElapsed || time.Since(a.created) > 2*time.Hour || len(req.Heroes) != a.Count || len(req.Logs) != 3 {
 		http.Error(w, "Незавершённое путешествие", 400)
 		return
 	}
 	used := map[int]bool{}
 	for _, h := range req.Heroes {
-		if h < 0 || h > 3 || used[h] {
+		if h < 0 || h > 5 || used[h] {
 			http.Error(w, "Недопустимые герои", 400)
 			return
 		}
@@ -529,15 +580,15 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 		}
 		last := -1
 		for _, action := range logs {
-			if action.Tick < last || action.Tick < 0 || action.Tick >= 3000 || action.Player < 0 || action.Player >= a.Count || (action.Kind != "jump" && action.Kind != "duck") {
+			if action.Tick < last || action.Tick < 0 || action.Tick >= maxTicks || action.Player < 0 || action.Player >= a.Count || (action.Kind != "jump" && action.Kind != "duck") {
 				http.Error(w, "Некорректный журнал", 400)
 				return
 			}
 			last = action.Tick
 		}
-		engine = newEngine(a.Seed, level, req.Heroes, totals)
+		engine = newEngineWithDifficulty(a.Seed, level, req.Heroes, totals, a.Difficulty)
 		next := 0
-		for engine.Tick < 3000 {
+		for engine.Tick < maxTicks {
 			for next < len(logs) && logs[next].Tick == engine.Tick {
 				engine.input(logs[next])
 				next++
@@ -553,7 +604,7 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 			totals = append(totals, p.Score)
 		}
 	}
-	if err := s.record(a.ID, engine.Players, time.Now()); err != nil {
+	if err := s.record(a.ID, engine.Players, time.Now(), a.Difficulty); err != nil {
 		http.Error(w, "Не удалось сохранить результат", 500)
 		return
 	}
@@ -561,21 +612,18 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 	a.players = engine.Players
 	send(w, map[string]any{"id": a.ID, "players": engine.Players})
 }
-func (s *Server) record(id string, players []Body, now time.Time) error {
-	max := -1
-	for _, p := range players {
-		if p.Eligible && p.Score > max {
-			max = p.Score
-		}
-	}
+func (s *Server) record(id string, players []Body, now time.Time, difficulty string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
+	if difficulty == "" {
+		difficulty = "medium"
+	}
 	for i, p := range players {
-		if p.Eligible && p.Score == max {
-			if _, err = tx.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished) VALUES(?,?,?,?,?)", id, i, p.Score, week(now), now.Unix()); err != nil {
+		if p.Eligible {
+			if _, err = tx.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished,difficulty) VALUES(?,?,?,?,?,?)", id, i, p.Score, week(now), now.Unix(), difficulty); err != nil {
 				return err
 			}
 		}
@@ -584,10 +632,12 @@ func (s *Server) record(id string, players []Body, now time.Time) error {
 }
 func (s *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		ID     string `json:"id"`
-		Token  string `json:"token"`
-		Player int    `json:"player"`
-		Name   string `json:"name"`
+		ID         string `json:"id"`
+		Token      string `json:"token"`
+		Player     int    `json:"player"`
+		Name       string `json:"name"`
+		Score      int    `json:"score,omitempty"`
+		Difficulty string `json:"difficulty,omitempty"`
 	}
 	if !decode(w, r, &req) {
 		return
@@ -600,33 +650,65 @@ func (s *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	valid := false
-	if a := s.attempts[req.ID]; a != nil && a.done && a.Token == req.Token && req.Player >= 0 && req.Player < a.Count {
+	if a := s.attempts[req.ID]; a != nil {
+		if !a.done || a.Token != req.Token || req.Player < 0 || req.Player >= a.Count {
+			http.Error(w, "Недопустимая сессия", 403)
+			return
+		}
 		valid = true
 	}
 	for _, room := range s.rooms {
-		if room.ID == req.ID && room.Phase == "finished" && req.Player >= 0 && req.Player < len(room.Members) && room.Members[req.Player].token == req.Token {
+		if room.ID == req.ID {
+			if room.Phase != "finished" || req.Player < 0 || req.Player >= len(room.Members) || room.Members[req.Player].token != req.Token {
+				http.Error(w, "Недопустимая сессия", 403)
+				return
+			}
 			valid = true
 		}
 	}
-	if !valid {
-		http.Error(w, "Недопустимая сессия", 403)
+	if valid {
+		res, err := s.db.Exec("UPDATE results SET name=? WHERE match_id=? AND player=? AND name IS NULL", name, req.ID, req.Player)
+		if err != nil {
+			http.Error(w, "Не удалось записать имя", 500)
+			return
+		}
+		n, _ := res.RowsAffected()
+		if n == 0 {
+			http.Error(w, "Результат уже записан или игрок не найден", 409)
+			return
+		}
+		send(w, map[string]bool{"ok": true})
 		return
 	}
-	res, err := s.db.Exec("UPDATE results SET name=? WHERE match_id=? AND player=? AND name IS NULL", name, req.ID, req.Player)
+
+	diff := req.Difficulty
+	if diff != "easy" && diff != "medium" && diff != "hard" {
+		diff = "medium"
+	}
+	if req.Score <= 0 || req.Score > 500000 {
+		http.Error(w, "Недопустимый счёт", 400)
+		return
+	}
+	now := time.Now()
+	matchID := req.ID
+	if matchID == "" {
+		matchID = token()
+	}
+	_, err := s.db.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished,name,difficulty) VALUES(?,?,?,?,?,?,?)",
+		matchID, req.Player, req.Score, week(now), now.Unix(), name, diff)
 	if err != nil {
-		http.Error(w, "Не удалось записать имя", 500)
-		return
-	}
-	n, _ := res.RowsAffected()
-	if n == 0 {
-		http.Error(w, "Результат уже записан или игрок не победил", 409)
+		http.Error(w, "Не удалось сохранить результат", 500)
 		return
 	}
 	send(w, map[string]bool{"ok": true})
 }
 func (s *Server) ranking(w http.ResponseWriter, r *http.Request) {
 	current := week(time.Now())
-	rows, err := s.db.Query("SELECT name,score FROM results WHERE week=? AND name IS NOT NULL ORDER BY score DESC,finished ASC,match_id ASC,player ASC LIMIT 100", current)
+	diff := r.URL.Query().Get("difficulty")
+	if diff == "" {
+		diff = "medium"
+	}
+	rows, err := s.db.Query("SELECT name,score FROM results WHERE week=? AND difficulty=? AND name IS NOT NULL ORDER BY score DESC,finished ASC,match_id ASC,player ASC LIMIT 20", current, diff)
 	if err != nil {
 		http.Error(w, "Рейтинг недоступен", 500)
 		return
@@ -645,7 +727,7 @@ func (s *Server) ranking(w http.ResponseWriter, r *http.Request) {
 		}
 		entries = append(entries, e)
 	}
-	send(w, map[string]any{"week": current, "entries": entries})
+	send(w, map[string]any{"week": current, "difficulty": diff, "entries": entries})
 }
 func env(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
@@ -659,8 +741,29 @@ func openDB(path string) (*sql.DB, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1)
-	_, err = db.Exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; CREATE TABLE IF NOT EXISTS results(match_id TEXT NOT NULL,player INTEGER NOT NULL,score INTEGER NOT NULL,week TEXT NOT NULL,finished INTEGER NOT NULL,name TEXT,PRIMARY KEY(match_id,player)); CREATE INDEX IF NOT EXISTS ranking_week ON results(week,score DESC);")
-	return db, err
+	_, err = db.Exec(`
+PRAGMA journal_mode=WAL;
+PRAGMA busy_timeout=5000;
+CREATE TABLE IF NOT EXISTS results(
+	match_id TEXT NOT NULL,
+	player INTEGER NOT NULL,
+	score INTEGER NOT NULL,
+	week TEXT NOT NULL,
+	finished INTEGER NOT NULL,
+	name TEXT,
+	difficulty TEXT NOT NULL DEFAULT 'medium',
+	PRIMARY KEY(match_id,player)
+);
+`)
+	if err != nil {
+		return nil, err
+	}
+	_, _ = db.Exec("ALTER TABLE results ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'medium'")
+	_, _ = db.Exec(`
+CREATE INDEX IF NOT EXISTS ranking_week ON results(week,score DESC);
+CREATE INDEX IF NOT EXISTS ranking_week_diff ON results(week,difficulty,score DESC);
+`)
+	return db, nil
 }
 func main() {
 	db, err := openDB(env("DB_PATH", "jump.sqlite"))

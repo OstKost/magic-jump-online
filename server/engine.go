@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"math"
+	"sort"
+)
 
 const stepMS = 20
 
@@ -28,6 +31,7 @@ type Body struct {
 	Hero       int     `json:"hero"`
 	Connected  bool    `json:"connected"`
 	Eligible   bool    `json:"eligible"`
+	Jumps      int     `json:"jumps"`
 }
 type Object struct {
 	Event
@@ -36,64 +40,126 @@ type Object struct {
 	Passed bool    `json:"passed"`
 }
 type Engine struct {
-	Tick    int      `json:"tick"`
-	Level   int      `json:"level"`
-	Players []Body   `json:"players"`
-	Items   []Object `json:"items"`
-	plans   [][]Event
-	next    []int
+	Tick       int      `json:"tick"`
+	Level      int      `json:"level"`
+	Difficulty string   `json:"difficulty,omitempty"`
+	Players    []Body   `json:"players"`
+	Items      []Object `json:"items"`
+	plans      [][]Event
+	next       []int
 }
 
-func schedule(seed uint32) []Event {
+func scheduleWithDifficulty(seed uint32, difficulty string) []Event {
 	random := func() float64 { seed = seed*1664525 + 1013904223; return float64(seed) / 4294967296 }
 	var out []Event
-	for at := 2200.; at < 55000; at += 1700 + random()*700 {
-		v := int(random() * 4)
-		obstacle := "ground"
-		if v == 3 {
-			obstacle = "overhead"
-		}
-		out = append(out, Event{at, "obstacle", v % 3, obstacle})
-		if random() > .25 {
-			out = append(out, Event{at, "bonus", 0, obstacle})
-		}
+	minInterval := 1700.
+	randInterval := 700.
+	maxAt := 55000.
+
+	if difficulty == "easy" {
+		minInterval = 1700
+		randInterval = 700
+		maxAt = 16000
+	} else if difficulty == "medium" {
+		minInterval = 1450
+		randInterval = 600
+		maxAt = 36000
+	} else if difficulty == "hard" {
+		minInterval = 1200
+		randInterval = 500
+		maxAt = 46000
 	}
-	return out
-}
-func route(seed uint32, player int) []Event {
-	source := schedule(seed)
-	var obstacles []Event
-	for _, e := range source {
-		if e.Kind == "obstacle" {
-			obstacles = append(obstacles, e)
-		}
-	}
-	var out []Event
-	for i, slot := range obstacles {
-		block := obstacles[(i+player)%len(obstacles)]
-		at := block.At
-		block.At = slot.At
-		out = append(out, block)
-		for _, e := range source {
-			if e.Kind == "bonus" && e.At == at {
-				e.At = slot.At
-				out = append(out, e)
+
+	for at := 2200.; at < maxAt; at += minInterval + random()*randInterval {
+		v := int(random() * 5)
+		if v == 4 {
+			out = append(out, Event{at, "bonus", 0, "none"})
+		} else {
+			obstacle := "ground"
+			if v == 3 {
+				obstacle = "overhead"
+			}
+			out = append(out, Event{at, "obstacle", v % 3, obstacle})
+			if random() > .25 {
+				out = append(out, Event{at, "bonus", 0, obstacle})
 			}
 		}
 	}
 	return out
 }
-func newEngine(seed uint32, level int, heroes []int, totals []int) *Engine {
-	e := &Engine{Level: level, Players: make([]Body, len(heroes)), plans: make([][]Event, len(heroes)), next: make([]int, len(heroes)), Items: []Object{}}
+
+func schedule(seed uint32) []Event {
+	return scheduleWithDifficulty(seed, "")
+}
+
+func routeWithDifficulty(seed uint32, player int, difficulty string) []Event {
+	source := scheduleWithDifficulty(seed, difficulty)
+	if len(source) == 0 {
+		return nil
+	}
+	var times []float64
+	seen := make(map[float64]bool)
+	for _, e := range source {
+		if !seen[e.At] {
+			seen[e.At] = true
+			times = append(times, e.At)
+		}
+	}
+	sort.Float64s(times)
+	if len(times) == 0 {
+		return nil
+	}
+	blocks := make([][]Event, len(times))
+	for i, t := range times {
+		for _, e := range source {
+			if e.At == t {
+				blocks[i] = append(blocks[i], e)
+			}
+		}
+	}
+	shift := player % len(times)
+	var out []Event
+	for i, targetAt := range times {
+		block := blocks[(i+shift)%len(times)]
+		for _, e := range block {
+			e.At = targetAt
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+func route(seed uint32, player int) []Event {
+	return routeWithDifficulty(seed, player, "")
+}
+
+func newEngineWithDifficulty(seed uint32, level int, heroes []int, totals []int, difficulty string) *Engine {
+	lives := 3
+	if difficulty == "easy" {
+		lives = 4
+	}
+	e := &Engine{
+		Level:      level,
+		Difficulty: difficulty,
+		Players:    make([]Body, len(heroes)),
+		plans:      make([][]Event, len(heroes)),
+		next:       make([]int, len(heroes)),
+		Items:      []Object{},
+	}
 	for i, h := range heroes {
-		e.Players[i] = Body{Lives: 3, Hero: h, Connected: true, Eligible: true}
+		e.Players[i] = Body{Lives: lives, Hero: h, Connected: true, Eligible: true}
 		if i < len(totals) {
 			e.Players[i].Score = totals[i]
 		}
-		e.plans[i] = route(seed+uint32(level), i)
+		e.plans[i] = routeWithDifficulty(seed+uint32(level), i, difficulty)
 	}
 	return e
 }
+
+func newEngine(seed uint32, level int, heroes []int, totals []int) *Engine {
+	return newEngineWithDifficulty(seed, level, heroes, totals, "")
+}
+
 func (e *Engine) input(a Action) {
 	if a.Player < 0 || a.Player >= len(e.Players) {
 		return
@@ -101,14 +167,23 @@ func (e *Engine) input(a Action) {
 	p := &e.Players[a.Player]
 	switch a.Kind {
 	case "jump":
-		if p.Y >= -.1 && !p.Held {
-			p.Velocity = -650
+		if !p.Held {
+			if p.Y >= -.1 {
+				p.Velocity = -650
+				p.Jumps = 1
+			} else if p.Jumps < 2 {
+				p.Velocity = -650
+				p.Jumps = 2
+			}
 		}
 	case "duck":
 		p.Held = a.Pressed
 	}
 }
 func collision(p Body, obstacle string) bool {
+	if obstacle == "none" {
+		return false
+	}
 	feet := -p.Y
 	head := feet + 102
 	if p.Duck {
@@ -123,7 +198,13 @@ func collision(p Body, obstacle string) bool {
 func (e *Engine) step() {
 	e.Tick++
 	elapsed := e.Tick * stepMS
-	speed := []float64{270, 310, 350}[e.Level]
+	speedMult := 1.0
+	if e.Difficulty == "easy" {
+		speedMult = 0.9
+	} else if e.Difficulty == "hard" {
+		speedMult = 1.05
+	}
+	speed := []float64{270, 310, 350}[e.Level] * speedMult
 	for i, plan := range e.plans {
 		for e.next[i] < len(plan) && plan[e.next[i]].At <= float64(elapsed) {
 			e.Items = append(e.Items, Object{Event: plan[e.next[i]], X: 1150, Player: i})
@@ -136,6 +217,7 @@ func (e *Engine) step() {
 		p.Y = math.Min(0, p.Y+p.Velocity*.02)
 		if p.Y == 0 {
 			p.Velocity = 0
+			p.Jumps = 0
 		}
 		p.Duck = p.Y == 0 && p.Held
 	}
@@ -162,7 +244,7 @@ func (e *Engine) step() {
 					p.Immune = elapsed + 1000
 				}
 			}
-			if o.Kind == "bonus" && ((o.Obstacle == "overhead" && p.Duck && p.Y == 0) || (o.Obstacle != "overhead" && p.Y < -35 && p.Y > -146)) {
+			if o.Kind == "bonus" && ((o.Obstacle == "overhead" && p.Duck && p.Y == 0) || (o.Obstacle == "none" && p.Y < -130 && p.Y > -230) || (o.Obstacle == "ground" && p.Y < -35 && p.Y > -146)) {
 				award(25)
 				o.Passed = true
 			}

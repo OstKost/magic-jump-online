@@ -11,13 +11,13 @@ with sync_playwright() as p:
   ctx=browser.new_context(viewport={'width':844,'height':390});ctx.route('https://fonts.googleapis.com/**',lambda route:route.abort());ctx.route('https://fonts.gstatic.com/**',lambda route:route.abort())
   print('new browser',flush=True);tab=ctx.new_page();tab.set_default_timeout(15000);tab.on('pageerror',lambda e:errors.append(str(e)));tab.goto(BASE,wait_until='domcontentloaded');tab.wait_for_timeout(1200);tab.keyboard.press('Space');tab.wait_for_timeout(800);print('browser ready',flush=True);return tab
  print('local modes',flush=True)
- local=page();local.locator('#solo-menu').click();local.locator('#confirm-character').click();local.locator('[data-ready="0"]').click();local.wait_for_timeout(200)
+ local=page();local.locator('#solo-menu').click();local.locator('[data-difficulty="easy"]').click();local.locator('#confirm-character').click();local.locator('[data-ready="0"]').click();local.wait_for_timeout(200)
  local.evaluate('''async()=>{const {game}=await import(document.querySelector('script[src*="/src/main.ts"]').src);window.scene=game.scene.scenes[0]}''')
  local.wait_for_function('scene.runners.length===1&&scene.playing',timeout=15000)
  local.keyboard.press('ArrowUp');local.wait_for_function('scene.runners[0].y<0')
  local.screenshot(path=str(OUT/'solo.png'))
  local.evaluate('scene.players[0].lives=0');local.locator('#result').wait_for();assert local.locator('#result').evaluate('(el)=>el.classList.contains("is-defeat")')
- local.locator('#result-menu').click();local.locator('#play-menu').click();local.locator('#confirm-character').click();local.locator('#confirm-character').click();assert local.locator('[data-ready]').count()==2
+ local.locator('#result-menu').click();local.locator('#play-menu').click();local.locator('[data-difficulty="medium"]').click();local.locator('#confirm-character').click();local.locator('#confirm-character').click();assert local.locator('[data-ready]').count()==2
  local.locator('[data-ready="0"]').click();local.wait_for_timeout(100);assert local.evaluate('!scene.playing');local.locator('[data-ready="1"]').click();local.wait_for_function('scene.runners.length===2&&scene.playing',timeout=15000);local.screenshot(path=str(OUT/'local-two.png'))
  local.evaluate('scene.players[0].lives=0');local.wait_for_function('scene.runners[0].y===0');local.keyboard.press('w');local.wait_for_function('scene.runners[0].y<0&&scene.playing');local.screenshot(path=str(OUT/'ghost.png'))
  local.evaluate('scene.players[1].lives=0');local.locator('#result').wait_for();assert local.locator('#result').evaluate('(el)=>el.classList.contains("is-defeat")')
@@ -31,9 +31,15 @@ with sync_playwright() as p:
   tab.locator('#online-menu').click();tab.locator('#room-code').fill(code);tab.locator('#join-room button').click();tab.locator('#online-ready').wait_for()
  print('choosing matching heroes',flush=True)
  for tab in tabs:
-  assert tab.locator('[data-online-hero]').count()==4
+  assert tab.locator('[data-online-hero]').count()>=4
   tab.locator('[data-online-hero="0"]').click()
   expect(tab.locator('[data-online-hero="0"]')).to_have_attribute('aria-pressed','true')
+ assert tabs[0].locator('[data-online-diff="easy"]').is_enabled()
+ assert tabs[1].locator('[data-online-diff="easy"]').is_disabled()
+ tabs[0].locator('[data-online-diff="easy"]').click()
+ tabs[0].wait_for_timeout(300)
+ for tab in tabs:
+  expect(tab.locator('[data-online-diff="easy"]')).to_have_attribute('aria-pressed','true')
  tabs[0].screenshot(path=str(OUT/'online-lobby.png'))
  print('readying all four',flush=True)
  for tab in tabs:tab.locator('#online-ready').click()

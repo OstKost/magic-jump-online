@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isStandaloneMode, isIOSDevice } from './pwa.ts';
+import { isStandaloneMode, isIOSDevice, updateNetworkStatusUI } from './pwa.ts';
 
 test('isStandaloneMode detects display-mode standalone and navigator.standalone', () => {
   // 1. Browser mode (not standalone)
@@ -62,4 +62,53 @@ test('isIOSDevice correctly identifies iPad, iPhone, and iPod in user agent', ()
   // Null/undefined checks
   assert.equal(isIOSDevice(undefined, undefined), false);
   assert.equal(isIOSDevice({ userAgent: '' }, undefined), false);
+});
+
+test('updateNetworkStatusUI disables online menu and marks it when offline', () => {
+  const badge = { hidden: true, textContent: '' } as any;
+  const statusEl = { hidden: true, textContent: '' } as any;
+  const onlineBtn = {
+    disabled: false,
+    title: '',
+    attrs: {} as Record<string, string>,
+    setAttribute(name: string, val: string) {
+      this.attrs[name] = val;
+    },
+    removeAttribute(name: string) {
+      delete this.attrs[name];
+    },
+    getAttribute(name: string) {
+      return this.attrs[name] ?? null;
+    },
+    querySelector(selector: string) {
+      if (selector === '.menu-status') return statusEl;
+      return null;
+    },
+  } as any;
+
+  // 1. Goes offline
+  updateNetworkStatusUI(false, { offlineBadge: badge, onlineBtn });
+
+  assert.equal(badge.hidden, false);
+  assert.match(badge.textContent, /Офлайн-режим/);
+  assert.equal(onlineBtn.disabled, true);
+  assert.equal(onlineBtn.getAttribute('aria-disabled'), 'true');
+  assert.match(onlineBtn.title, /недоступен/i);
+  assert.equal(statusEl.hidden, false);
+  assert.equal(statusEl.textContent, 'нет интернета');
+
+  // 2. Returns online
+  updateNetworkStatusUI(true, { offlineBadge: badge, onlineBtn });
+
+  assert.equal(badge.hidden, true);
+  assert.equal(onlineBtn.disabled, false);
+  assert.equal(onlineBtn.getAttribute('aria-disabled'), null);
+  assert.equal(onlineBtn.title, '');
+  assert.equal(statusEl.hidden, true);
+
+  // 3. Gracefully handles undefined or null elements without throwing
+  assert.doesNotThrow(() => {
+    updateNetworkStatusUI(false, { offlineBadge: null, onlineBtn: null });
+    updateNetworkStatusUI(true, { offlineBadge: null, onlineBtn: null });
+  });
 });

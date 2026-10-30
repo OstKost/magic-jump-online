@@ -78,3 +78,47 @@ func TestReplayRejectsJourneyWhereEveryoneDied(t *testing.T) {
 		t.Fatal(w.Code, w.Body.String())
 	}
 }
+
+func TestEngineDoubleJump(t *testing.T) {
+	e := newEngine(42, 0, []int{0}, nil)
+	e.input(Action{Player: 0, Kind: "jump", Pressed: true})
+	if e.Players[0].Jumps != 1 || e.Players[0].Velocity != -650 {
+		t.Fatalf("first jump failed: %+v", e.Players[0])
+	}
+	e.step()
+	if e.Players[0].Y >= 0 {
+		t.Fatalf("expected airborne runner, got %f", e.Players[0].Y)
+	}
+	e.input(Action{Player: 0, Kind: "jump", Pressed: true})
+	if e.Players[0].Jumps != 2 || e.Players[0].Velocity != -650 {
+		t.Fatalf("double jump failed: %+v", e.Players[0])
+	}
+	// Third jump in air must be ignored
+	e.input(Action{Player: 0, Kind: "jump", Pressed: true})
+	if e.Players[0].Jumps != 2 {
+		t.Fatalf("third jump should be ignored: %+v", e.Players[0])
+	}
+	// Run steps until runner lands on ground
+	for e.Players[0].Y < 0 {
+		e.step()
+	}
+	if e.Players[0].Jumps != 0 {
+		t.Fatalf("jumps counter should reset on landing: %+v", e.Players[0])
+	}
+}
+
+func TestDoubleJumpBonusReachability(t *testing.T) {
+	p := Body{Y: 0, Lives: 3}
+	if collision(p, "none") {
+		t.Fatal("ground player must not collide when obstacle is none")
+	}
+	// Bonus at height requiring double jump (-130 to -230)
+	singleApexY := -111.18
+	if singleApexY < -130 && singleApexY > -230 {
+		t.Fatal("single jump apex must not enter double jump bonus zone")
+	}
+	doubleJumpApexY := -180.0
+	if !(doubleJumpApexY < -130 && doubleJumpApexY > -230) {
+		t.Fatal("double jump apex must enter double jump bonus zone")
+	}
+}

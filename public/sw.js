@@ -1,4 +1,4 @@
-const CACHE_NAME = 'magic-jump-online-v3';
+const CACHE_NAME = 'magic-jump-online-v6';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -11,7 +11,9 @@ const PRECACHE_ASSETS = [
   '/icons/apple-touch-icon.png',
   '/art/menu-background.png',
   '/art/concept_persons.png',
-  '/art/candy-world.png',
+  '/art/level-1-bg.png',
+  '/art/level-2-bg.png',
+  '/art/level-3-bg.png',
   '/art/victory.png',
   '/art/defeat.png',
   '/art/sprite.png'

@@ -18,7 +18,16 @@ test('one player cannot start the game alone or signal for the other player',()=
 test('new journey clears both readiness and previous hero selection',()=>{
   const flow=new Journey();flow.choose(3);flow.confirm();flow.choose(2);flow.markReady(0);flow.markReady(1);flow.reset();
   assert.equal(flow.choosing,0);assert.deepEqual(flow.selected,[0,1]);assert.deepEqual(flow.ready,[false,false]);
-  for(const invalid of [-1,4,1.5,NaN])assert.equal(flow.choose(invalid),false);
+  for(const invalid of [-1,6,1.5,NaN])assert.equal(flow.choose(invalid),false);
+});
+
+test('secret heroes Kai and Leya can be chosen for both players',()=>{
+  const journey=new Journey();
+  assert.equal(journey.choose(4),true); // Kai
+  assert.equal(journey.confirm(),false);
+  assert.equal(journey.choose(5),true); // Leya
+  assert.equal(journey.confirm(),true);
+  assert.deepEqual(journey.selected,[4,5]);
 });
 
 test('solo journey needs one selection and one ready signal',()=>{

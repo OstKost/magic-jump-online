@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/http/httptest"
@@ -67,7 +68,7 @@ func TestGoldenRules(t *testing.T) {
 		got, _ := json.Marshal(route(f.Seed, i))
 		expected, _ := json.Marshal(want)
 		if string(got) != string(expected) {
-			t.Fatalf("route %d differs", i)
+			t.Fatalf("route %d differs:\nGOT:\n%s\nWANT:\n%s", i, string(got), string(expected))
 		}
 	}
 	e := newEngine(f.Seed, 0, []int{0, 1}, nil)
@@ -85,17 +86,17 @@ func TestGoldenRules(t *testing.T) {
 		}
 	}
 }
-func TestRankingOnlyWinnersAndIdempotency(t *testing.T) {
+func TestRankingAllPlayersAndIdempotency(t *testing.T) {
 	s := testServer(t)
 	now := time.Now()
-	if err := s.record("match", []Body{{Score: 100, Eligible: true}, {Score: 50, Eligible: true}}, now); err != nil {
+	if err := s.record("match", []Body{{Score: 100, Eligible: true}, {Score: 50, Eligible: true}}, now, "medium"); err != nil {
 		t.Fatal(err)
 	}
-	_ = s.record("match", []Body{{Score: 100, Eligible: true}}, now)
+	_ = s.record("match", []Body{{Score: 100, Eligible: true}}, now, "medium")
 	var n int
 	_ = s.db.QueryRow("SELECT COUNT(*) FROM results").Scan(&n)
-	if n != 1 {
-		t.Fatal(n)
+	if n != 2 {
+		t.Fatalf("expected 2 players recorded, got %d", n)
 	}
 	s.attempts["match"] = &Attempt{Token: "secret", Count: 2, done: true}
 	request := func(body string) int {
@@ -107,14 +108,22 @@ func TestRankingOnlyWinnersAndIdempotency(t *testing.T) {
 	if request(`{"id":"match","token":"bad","player":0,"name":"A"}`) != 403 {
 		t.Fatal("bad token accepted")
 	}
-	if request(`{"id":"match","token":"secret","player":1,"name":"A"}`) != 409 {
-		t.Fatal("loser accepted")
+	if request(`{"id":"match","token":"secret","player":1,"name":"Second"}`) != 200 {
+		t.Fatal("non-winner rejected")
 	}
 	if request(`{"id":"match","token":"secret","player":0,"name":"<b>A</b>"}`) != 200 {
 		t.Fatal("winner rejected")
 	}
 	if request(`{"id":"match","token":"secret","player":0,"name":"B"}`) != 409 {
 		t.Fatal("duplicate accepted")
+	}
+	// Test offline result submission
+	if request(`{"id":"offline-123","player":0,"name":"OfflineHero","score":350,"difficulty":"hard"}`) != 200 {
+		t.Fatal("offline submission rejected")
+	}
+	// Test idempotent retry of offline result
+	if request(`{"id":"offline-123","player":0,"name":"OfflineHero","score":350,"difficulty":"hard"}`) != 200 {
+		t.Fatal("offline duplicate rejected")
 	}
 }
 func TestRoomLimitAndSocketAuth(t *testing.T) {
@@ -172,7 +181,7 @@ func TestRoomLimitAndSocketAuth(t *testing.T) {
 	if room.Members[0].Hero != 3 || room.Members[3].Hero != 3 || room.Members[0].Ready {
 		t.Fatal("duplicate hero must be accepted and changing hero must reset ready")
 	}
-	_ = c.WriteJSON(map[string]any{"type": "hero", "hero": 4})
+	_ = c.WriteJSON(map[string]any{"type": "hero", "hero": 6})
 	if err = c.ReadJSON(&room); err != nil || room.Members[0].Hero != 3 {
 		t.Fatal("invalid hero must be rejected", err)
 	}
@@ -187,5 +196,207 @@ func TestRejectIncompleteReplay(t *testing.T) {
 	s.routes().ServeHTTP(w, r)
 	if w.Code != 400 {
 		t.Fatal(w.Code)
+	}
+}
+
+func TestRankingByDifficulty(t *testing.T) {
+	s := testServer(t)
+	now := time.Now()
+	_ = s.record("match-easy", []Body{{Score: 120, Eligible: true}}, now, "easy")
+	_ = s.record("match-hard", []Body{{Score: 350, Eligible: true}}, now, "hard")
+	_, _ = s.db.Exec("UPDATE results SET name='EasyHero' WHERE match_id='match-easy'")
+	_, _ = s.db.Exec("UPDATE results SET name='HardHero' WHERE match_id='match-hard'")
+
+	reqEasy := httptest.NewRequest("GET", "/api/ranking?difficulty=easy", nil)
+	wEasy := httptest.NewRecorder()
+	s.routes().ServeHTTP(wEasy, reqEasy)
+	if !strings.Contains(wEasy.Body.String(), "EasyHero") || strings.Contains(wEasy.Body.String(), "HardHero") {
+		t.Fatalf("easy ranking mismatch: %s", wEasy.Body.String())
+	}
+
+	reqHard := httptest.NewRequest("GET", "/api/ranking?difficulty=hard", nil)
+	wHard := httptest.NewRecorder()
+	s.routes().ServeHTTP(wHard, reqHard)
+	if !strings.Contains(wHard.Body.String(), "HardHero") || strings.Contains(wHard.Body.String(), "EasyHero") {
+		t.Fatalf("hard ranking mismatch: %s", wHard.Body.String())
+	}
+}
+
+func TestOnlineHostDifficultySelection(t *testing.T) {
+	s := testServer(t)
+	server := httptest.NewServer(s.routes())
+	defer server.Close()
+
+	// 1. Create room (host)
+	res, err := http.Post(server.URL+"/api/rooms", "application/json", strings.NewReader(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	var hostData map[string]string
+	_ = json.NewDecoder(res.Body).Decode(&hostData)
+	code := hostData["code"]
+
+	// Connect host WS
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/api/rooms/" + code + "/ws"
+	hostWS, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer hostWS.Close()
+	_ = hostWS.WriteJSON(map[string]string{"token": hostData["token"]})
+	var room Room
+	if err := hostWS.ReadJSON(&room); err != nil {
+		t.Fatal(err)
+	}
+	if room.Difficulty != "medium" {
+		t.Fatalf("expected default medium difficulty, got %q", room.Difficulty)
+	}
+
+	// 2. Join second player (guest)
+	joinRes, err := http.Post(server.URL+"/api/rooms/"+code+"/join", "application/json", strings.NewReader(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer joinRes.Body.Close()
+	var guestData map[string]string
+	_ = json.NewDecoder(joinRes.Body).Decode(&guestData)
+
+	// Consume host update from join
+	_ = hostWS.ReadJSON(&room)
+
+	// Connect guest WS
+	guestWS, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer guestWS.Close()
+	_ = guestWS.WriteJSON(map[string]string{"token": guestData["token"]})
+	var guestRoom Room
+	_ = guestWS.ReadJSON(&guestRoom)
+	_ = hostWS.ReadJSON(&room)
+
+	// 3. Guest tries to change difficulty to "hard" - must be ignored!
+	_ = guestWS.WriteJSON(map[string]any{"type": "difficulty", "difficulty": "hard"})
+	_ = guestWS.ReadJSON(&guestRoom)
+	_ = hostWS.ReadJSON(&room)
+	if guestRoom.Difficulty != "medium" {
+		t.Fatalf("guest must NOT be able to change difficulty, got %q", guestRoom.Difficulty)
+	}
+
+	// 4. Host changes difficulty to "easy" - must be accepted!
+	_ = hostWS.WriteJSON(map[string]any{"type": "difficulty", "difficulty": "easy"})
+	if err := hostWS.ReadJSON(&room); err != nil {
+		t.Fatal(err)
+	}
+	if room.Difficulty != "easy" {
+		t.Fatalf("host changing difficulty to easy failed, got %q", room.Difficulty)
+	}
+	_ = guestWS.ReadJSON(&guestRoom)
+	if guestRoom.Difficulty != "easy" {
+		t.Fatalf("guest should receive updated difficulty easy, got %q", guestRoom.Difficulty)
+	}
+
+	// 5. Host and guest ready, and host starts
+	_ = guestWS.WriteJSON(map[string]any{"type": "ready"})
+	_ = guestWS.ReadJSON(&guestRoom)
+	_ = hostWS.ReadJSON(&room)
+
+	_ = hostWS.WriteJSON(map[string]any{"type": "ready"})
+	_ = hostWS.ReadJSON(&room)
+	_ = guestWS.ReadJSON(&guestRoom)
+
+	_ = hostWS.WriteJSON(map[string]any{"type": "start"})
+	_ = hostWS.ReadJSON(&room)
+	if room.Phase != "playing" || room.Engine == nil {
+		t.Fatalf("expected playing phase with engine, got phase %q", room.Phase)
+	}
+	if room.Engine.Difficulty != "easy" {
+		t.Fatalf("expected engine difficulty easy, got %q", room.Engine.Difficulty)
+	}
+	if room.Engine.Players[0].Lives != 4 {
+		t.Fatalf("expected 4 starting lives for easy online engine, got %d", room.Engine.Players[0].Lives)
+	}
+}
+
+func TestRankingTop20Limit(t *testing.T) {
+	s := testServer(t)
+	now := time.Now()
+	for i := 1; i <= 25; i++ {
+		_, err := s.db.Exec("INSERT INTO results(match_id, player, score, week, finished, name, difficulty) VALUES(?, 0, ?, ?, ?, ?, 'medium')",
+			fmt.Sprintf("m-%d", i), i*10, week(now), now.Unix(), fmt.Sprintf("Player%d", i))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := httptest.NewRequest("GET", "/api/ranking?difficulty=medium", nil)
+	w := httptest.NewRecorder()
+	s.routes().ServeHTTP(w, r)
+	if w.Code != 200 {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var data struct {
+		Entries []struct {
+			Name  string `json:"name"`
+			Score int    `json:"score"`
+		} `json:"entries"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&data); err != nil {
+		t.Fatal(err)
+	}
+	if len(data.Entries) != 20 {
+		t.Fatalf("expected exactly 20 entries, got %d", len(data.Entries))
+	}
+	if data.Entries[0].Score != 250 || data.Entries[19].Score != 60 {
+		t.Fatalf("expected highest score 250, 20th score 60; got %d and %d", data.Entries[0].Score, data.Entries[19].Score)
+	}
+}
+
+func TestOnlineMatchRecordsAllPlayersOnDefeat(t *testing.T) {
+	s := testServer(t)
+	now := time.Now()
+	players := []Body{
+		{Score: 150, Lives: 0, Eligible: true},
+		{Score: 220, Lives: 0, Eligible: true},
+	}
+	room := &Room{
+		ID:         "defeat-room",
+		Code:       "9999",
+		Difficulty: "medium",
+		Members: []*Member{
+			{ID: "m1", token: "tok1"},
+			{ID: "m2", token: "tok2"},
+		},
+		Engine: &Engine{
+			Level:   1,
+			Players: players,
+		},
+		Phase:   "playing",
+		created: now,
+	}
+	s.rooms["9999"] = room
+
+	stop := make(chan struct{})
+	defer close(stop)
+	go s.loop(stop)
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		s.mu.Lock()
+		phase := room.Phase
+		s.mu.Unlock()
+		if phase == "finished" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("room did not transition to finished on defeat, phase=%q", phase)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	var count int
+	_ = s.db.QueryRow("SELECT COUNT(*) FROM results WHERE match_id='defeat-room'").Scan(&count)
+	if count != 2 {
+		t.Fatalf("expected both players recorded in results on defeat, got %d", count)
 	}
 }

@@ -48,6 +48,43 @@ export function initPWA(): void {
   const installButtons = document.querySelectorAll<HTMLButtonElement>('[data-install-btn]');
   const iosDialog = document.querySelector<HTMLElement>('#ios-install-dialog');
   const offlineBadge = document.querySelector<HTMLElement>('#offline-badge');
+  const onlineBtn = document.querySelector<HTMLButtonElement>('#online-menu');
+  const statusEl = document.querySelector<HTMLElement>('#install-device-status');
+
+  // Platform tabs initialization for the dedicated install screen
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.platform-tab');
+  const panes = document.querySelectorAll<HTMLElement>('.tab-pane');
+
+  function switchTab(targetTab: string) {
+    tabs.forEach((t) => {
+      const active = t.dataset.tab === targetTab;
+      t.classList.toggle('active', active);
+      t.setAttribute('aria-selected', String(active));
+    });
+    panes.forEach((p) => {
+      const active = p.id === `tab-${targetTab}`;
+      p.classList.toggle('active', active);
+      p.hidden = !active;
+    });
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      if (target) switchTab(target);
+    });
+  });
+
+  // Auto-detect matching tab for user device
+  if (tabs.length) {
+    if (isIOSDevice()) {
+      switchTab('ios');
+    } else if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)) {
+      switchTab('android');
+    } else {
+      switchTab('desktop');
+    }
+  }
 
   function updateInstallButtons() {
     const installed = isStandaloneMode();
@@ -61,9 +98,21 @@ export function initPWA(): void {
         btn.disabled = false;
         btn.classList.remove('is-installed');
         const label = btn.querySelector('.install-text');
-        if (label) label.textContent = 'Скачать игру';
+        if (label) label.textContent = 'Установить';
       }
     });
+
+    if (statusEl) {
+      if (installed) {
+        statusEl.textContent = '✓ Игра уже установлена и работает как приложение!';
+      } else if (deferredPrompt) {
+        statusEl.textContent = '✓ Доступна быстрая установка в 1 клик!';
+      } else if (isIOSDevice()) {
+        statusEl.textContent = 'Для iPhone / iPad следуйте инструкции Safari ниже';
+      } else {
+        statusEl.textContent = 'Инструкция по установке для вашего браузера ниже';
+      }
+    }
   }
 
   // 2. Intercept beforeinstallprompt for Android / Chromium browsers
@@ -102,12 +151,20 @@ export function initPWA(): void {
         deferredPrompt = null;
         updateInstallButtons();
       } else if (isIOSDevice()) {
-        // Show iOS Safari tutorial modal
+        // Activate iOS tab and show guidance
+        switchTab('ios');
         if (iosDialog) {
           iosDialog.hidden = false;
+        } else {
+          showToast('В Safari нажмите кнопку «Поделиться» (⎋), затем «На экран «Домой»» (⊞)');
         }
       } else {
-        // Helpful fallback instructions for browsers where prompt has not yet fired
+        // Activate desktop or android tab and show guidance
+        if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)) {
+          switchTab('android');
+        } else {
+          switchTab('desktop');
+        }
         showToast('Для установки нажмите меню браузера (⋮ или ⋯) и выберите «Установить приложение»');
       }
     });
@@ -122,19 +179,62 @@ export function initPWA(): void {
 
   // 6. Online / Offline network status listener
   function updateNetworkStatus() {
-    if (!offlineBadge) return;
-    if (!navigator.onLine) {
-      offlineBadge.hidden = false;
-      offlineBadge.textContent = 'Офлайн-режим (игра работает без интернета)';
-    } else {
-      offlineBadge.hidden = true;
-    }
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    updateNetworkStatusUI(isOnline, { offlineBadge, onlineBtn });
   }
 
   window.addEventListener('online', updateNetworkStatus);
   window.addEventListener('offline', updateNetworkStatus);
   updateNetworkStatus();
   updateInstallButtons();
+}
+
+/**
+ * Updates UI elements for online / offline network status.
+ */
+export function updateNetworkStatusUI(
+  isOnline: boolean,
+  elements?: {
+    offlineBadge?: HTMLElement | null;
+    onlineBtn?: HTMLButtonElement | null;
+  }
+): void {
+  const badge = elements?.offlineBadge !== undefined
+    ? elements.offlineBadge
+    : (typeof document !== 'undefined' ? document.querySelector<HTMLElement>('#offline-badge') : null);
+  const onlineBtn = elements?.onlineBtn !== undefined
+    ? elements.onlineBtn
+    : (typeof document !== 'undefined' ? document.querySelector<HTMLButtonElement>('#online-menu') : null);
+  const statusEl = onlineBtn?.querySelector<HTMLElement>('.menu-status');
+
+  if (badge) {
+    if (!isOnline) {
+      badge.hidden = false;
+      badge.textContent = 'Офлайн-режим (игра работает без интернета)';
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  if (onlineBtn) {
+    if (!isOnline) {
+      onlineBtn.disabled = true;
+      onlineBtn.setAttribute('aria-disabled', 'true');
+      onlineBtn.title = 'Онлайн-режим недоступен без подключения к интернету';
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.textContent = 'нет интернета';
+      }
+    } else {
+      onlineBtn.disabled = false;
+      onlineBtn.removeAttribute('aria-disabled');
+      onlineBtn.title = '';
+      onlineBtn.removeAttribute('title');
+      if (statusEl) {
+        statusEl.hidden = true;
+      }
+    }
+  }
 }
 
 /**

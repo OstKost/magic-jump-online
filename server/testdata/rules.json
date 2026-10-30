@@ -11,7 +11,7 @@
       {
         "at": 4304.096838762052,
         "kind": "obstacle",
-        "variant": 0,
+        "variant": 1,
         "obstacle": "ground"
       },
       {
@@ -23,255 +23,207 @@
       {
         "at": 6022.061572154053,
         "kind": "obstacle",
-        "variant": 1,
+        "variant": 2,
         "obstacle": "ground"
-      },
-      {
-        "at": 8333.731166180223,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
       },
       {
         "at": 8333.731166180223,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "overhead"
+        "obstacle": "none"
       },
       {
-        "at": 10383.504875889048,
+        "at": 10630.973072745837,
         "kind": "obstacle",
         "variant": 2,
         "obstacle": "ground"
       },
       {
-        "at": 10383.504875889048,
+        "at": 10630.973072745837,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 12501.033719419502,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 14866.095512988977,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 14866.095512988977,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 16951.451371936128,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 16951.451371936128,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 18832.728129532188,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 18832.728129532188,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 20641.433865600266,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 20641.433865600266,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 22383.927279920317,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 22383.927279920317,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 24664.899465069175,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 24664.899465069175,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 26631.43012379296,
+        "at": 12933.992403955199,
         "kind": "obstacle",
         "variant": 2,
         "obstacle": "ground"
       },
       {
-        "at": 26631.43012379296,
+        "at": 14732.13926255703,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 28829.385899635963,
-        "kind": "obstacle",
-        "variant": 2,
-        "obstacle": "ground"
-      },
-      {
-        "at": 28829.385899635963,
+        "at": 17079.32807460893,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 30844.212894304655,
+        "at": 19164.68393355608,
         "kind": "obstacle",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 32857.37792556174,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 32857.37792556174,
+        "at": 19164.68393355608,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 34972.98225592822,
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 25347.856980306096,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 27423.95912099164,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 29715.691604069434,
         "kind": "obstacle",
         "variant": 0,
         "obstacle": "overhead"
       },
       {
-        "at": 34972.98225592822,
+        "at": 29715.691604069434,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "overhead"
       },
       {
-        "at": 36824.020615336485,
+        "at": 31825.651395739987,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 42144.868372776546,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
       },
       {
-        "at": 38718.600912136026,
+        "at": 42144.868372776546,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 43858.22769710794,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
       },
       {
-        "at": 38718.600912136026,
+        "at": 43858.22769710794,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 41087.71556625143,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 41087.71556625143,
+        "at": 46176.23397749849,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 43195.34162799828,
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 50118.74905843288,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
       },
       {
-        "at": 43195.34162799828,
+        "at": 50118.74905843288,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 44985.893119103275,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 47330.95269992482,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 47330.95269992482,
+        "at": 51909.300549537875,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "overhead"
+        "obstacle": "none"
       },
       {
-        "at": 49527.99488878809,
-        "kind": "obstacle",
-        "variant": 1,
-        "obstacle": "ground"
-      },
-      {
-        "at": 51584.45833446458,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 53707.32493198011,
-        "kind": "obstacle",
-        "variant": 2,
-        "obstacle": "ground"
-      },
-      {
-        "at": 53707.32493198011,
+        "at": 53681.38146139681,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       }
     ],
     [
       {
         "at": 2200,
         "kind": "obstacle",
-        "variant": 0,
+        "variant": 1,
         "obstacle": "ground"
       },
       {
@@ -283,20 +235,14 @@
       {
         "at": 4304.096838762052,
         "kind": "obstacle",
-        "variant": 1,
+        "variant": 2,
         "obstacle": "ground"
-      },
-      {
-        "at": 6022.061572154053,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
       },
       {
         "at": 6022.061572154053,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "overhead"
+        "obstacle": "none"
       },
       {
         "at": 8333.731166180223,
@@ -311,223 +257,181 @@
         "obstacle": "ground"
       },
       {
-        "at": 10383.504875889048,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 12501.033719419502,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 12501.033719419502,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 14866.095512988977,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 14866.095512988977,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 16951.451371936128,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 16951.451371936128,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 18832.728129532188,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 18832.728129532188,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 20641.433865600266,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 20641.433865600266,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 22383.927279920317,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 22383.927279920317,
-        "kind": "bonus",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 24664.899465069175,
+        "at": 10630.973072745837,
         "kind": "obstacle",
         "variant": 2,
         "obstacle": "ground"
       },
       {
-        "at": 24664.899465069175,
+        "at": 12933.992403955199,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 26631.43012379296,
-        "kind": "obstacle",
-        "variant": 2,
-        "obstacle": "ground"
-      },
-      {
-        "at": 26631.43012379296,
+        "at": 14732.13926255703,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 28829.385899635963,
+        "at": 17079.32807460893,
         "kind": "obstacle",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 30844.212894304655,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 30844.212894304655,
+        "at": 17079.32807460893,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 32857.37792556174,
+        "at": 19164.68393355608,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 25347.856980306096,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 27423.95912099164,
         "kind": "obstacle",
         "variant": 0,
         "obstacle": "overhead"
       },
       {
-        "at": 32857.37792556174,
+        "at": 27423.95912099164,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "overhead"
       },
       {
-        "at": 34972.98225592822,
+        "at": 29715.691604069434,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "overhead"
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "obstacle",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 40172.28040576447,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
       },
       {
-        "at": 36824.020615336485,
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "ground"
+      },
+      {
+        "at": 42144.868372776546,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
       },
       {
-        "at": 36824.020615336485,
+        "at": 42144.868372776546,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 38718.600912136026,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 38718.600912136026,
+        "at": 43858.22769710794,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 41087.71556625143,
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "obstacle": "none"
+      },
+      {
+        "at": 48011.12299668603,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
       },
       {
-        "at": 41087.71556625143,
+        "at": 48011.12299668603,
         "kind": "bonus",
         "variant": 0,
         "obstacle": "ground"
       },
       {
-        "at": 43195.34162799828,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 44985.893119103275,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "overhead"
-      },
-      {
-        "at": 44985.893119103275,
+        "at": 50118.74905843288,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "overhead"
+        "obstacle": "none"
       },
       {
-        "at": 47330.95269992482,
-        "kind": "obstacle",
-        "variant": 1,
-        "obstacle": "ground"
-      },
-      {
-        "at": 49527.99488878809,
-        "kind": "obstacle",
-        "variant": 0,
-        "obstacle": "ground"
-      },
-      {
-        "at": 51584.45833446458,
-        "kind": "obstacle",
-        "variant": 2,
-        "obstacle": "ground"
-      },
-      {
-        "at": 51584.45833446458,
+        "at": 51909.300549537875,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "obstacle": "none"
       },
       {
-        "at": 53707.32493198011,
+        "at": 53681.38146139681,
         "kind": "obstacle",
         "variant": 1,
         "obstacle": "ground"
@@ -1121,15 +1025,15 @@
   "players": [
     {
       "lives": 0,
-      "score": 104,
-      "roundScore": 104,
+      "score": 76,
+      "roundScore": 76,
       "invulnerable": 10600
     },
     {
       "lives": 0,
-      "score": 140,
-      "roundScore": 140,
-      "invulnerable": 10600
+      "score": 28,
+      "roundScore": 28,
+      "invulnerable": 12900
     }
   ]
 }

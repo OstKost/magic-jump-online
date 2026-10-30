@@ -22,6 +22,8 @@ export class Pet {
     // Default resting texture at start and waiting
     const restKey = key === 'black-cat' ? 'black-cat-rest'
       : key === 'ginger-cat' ? 'ginger-cat-rest'
+      : key === 'falcon' ? 'falcon-rest'
+      : key === 'red-panda' ? 'red-panda-rest'
       : key;
     
     const initialTexture = scene.textures.exists(restKey) ? restKey : key;
@@ -50,14 +52,16 @@ export class Pet {
       this.isMoving = true;
       if (this.isAnimated) {
         if (this.sprite.texture.key !== this.key) this.sprite.setTexture(this.key);
-      } else if (this.key === 'eagle') {
-        if (this.sprite.scene.textures.exists('eagle-fly')) {
-          this.sprite.setTexture('eagle-fly');
+      } else if (this.key === 'eagle' || this.key === 'falcon') {
+        const flyKey = this.key === 'falcon' ? 'falcon-fly' : 'eagle-fly';
+        if (this.sprite.scene.textures.exists(flyKey)) {
+          this.sprite.setTexture(flyKey);
           this.sprite.setOrigin(.5, 104 / 128);
         }
-      } else if (this.key === 'fox') {
-        if (this.sprite.scene.textures.exists('fox-run')) {
-          this.sprite.setTexture('fox-run');
+      } else if (this.key === 'fox' || this.key === 'red-panda') {
+        const runKey = this.key === 'red-panda' ? 'red-panda-run' : 'fox-run';
+        if (this.sprite.scene.textures.exists(runKey)) {
+          this.sprite.setTexture(runKey);
           this.sprite.setOrigin(.5, 112 / 128);
         }
       }
@@ -81,7 +85,7 @@ export class Pet {
       if (this.hop === 0) this.hopVelocity = 0;
     }
 
-    if (this.key === 'eagle') {
+    if (this.key === 'eagle' || this.key === 'falcon') {
       const flightHover = -16 + Math.sin(this.age * 6) * 5;
       this.sprite.y = floor + flightHover + this.hop;
     } else {
@@ -98,6 +102,8 @@ export class Pet {
     const restKey = this.key === 'black-cat' ? 'black-cat-rest'
       : this.key === 'ginger-cat' ? 'ginger-cat-rest'
       : this.key === 'eagle' ? 'eagle'
+      : this.key === 'falcon' ? 'falcon-rest'
+      : this.key === 'red-panda' ? 'red-panda-rest'
       : 'fox';
     
     if (this.sprite.texture.key !== restKey && this.sprite.scene.textures.exists(restKey)) {

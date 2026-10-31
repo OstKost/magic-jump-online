@@ -60,4 +60,6 @@ test('updateFirefly wraps smoothly around borders with buffer', () => {
   updateFirefly(f, 0.1, 800, 600, 5);
   // After exceeding width + 24 (824), wraps to -24
   assert.ok(f.x < 10);
+  // Trail must be cleared on wrap so cross-screen stripes never occur
+  assert.equal(f.trail.length, 0);
 });

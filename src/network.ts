@@ -57,6 +57,28 @@ export function mountNetwork(show:(id:string)=>void){
    </div>
   </div>
   <div id="online-match" hidden><div id="online-clock"></div><div id="opponent-lanes" aria-label="Экраны друзей"></div><div id="own-lane"></div><div class="online-controls" aria-label="Управление вашим героем"><button id="online-duck" aria-label="Присесть, удерживайте">${actionIcon('duck')}<strong>Присесть</strong><kbd>S / ↓</kbd></button><button id="online-cast" class="cast-control" aria-label="Атака">${castButtonContent('A / ←')}</button><button id="online-dash" class="dash-control" aria-label="Рывок">${dashButtonContent('D / →')}</button><button id="online-jump" aria-label="Прыжок">${actionIcon('jump')}<strong>Прыжок</strong><kbd>W / ↑</kbd></button></div></div>
+  <div id="online-stage-clear" class="online-stage-clear" hidden>
+    <div class="stage-clear-content">
+      <span class="eyebrow">ЭТАП ПРОЙДЕН! 🌟</span>
+      <h2 id="stage-clear-title">Мир покорен!</h2>
+      <p id="stage-clear-subtitle">Все герои справились с препятствиями. Впереди следующее испытание!</p>
+      <div id="stage-clear-scores" class="stage-clear-scores"></div>
+      <div class="stage-next-preview">
+        <span class="eyebrow">СЛЕДУЮЩИЙ МИР</span>
+        <h3 id="stage-next-world-name"></h3>
+      </div>
+      <footer class="stage-clear-actions">
+        <p id="stage-clear-guidance" role="status"></p>
+        <button id="stage-clear-ready" class="primary">Готов к следующему миру ✓</button>
+        <button id="stage-clear-start" class="primary" hidden>Вперёд к новым мирам →</button>
+      </footer>
+    </div>
+  </div>
+  <div id="online-rotate-notice" class="rotate-notice" hidden>
+    <span>⤾</span>
+    <h2>Поверните телефон</h2>
+    <p>Играйте горизонтально: управление слева и справа,<br>дорожки героев — в центре экрана.</p>
+  </div>
   <div id="online-result" hidden></div>
  </section>
  <section id="ranking" class="screen panel ranking-screen" hidden>
@@ -67,7 +89,7 @@ export function mountNetwork(show:(id:string)=>void){
     <button class="ranking-tab is-active" data-diff="medium" role="tab" aria-selected="true"><span class="tab-icon">⭐</span><span>Средний</span><small>40 сек</small></button>
     <button class="ranking-tab" data-diff="hard" role="tab" aria-selected="false"><span class="tab-icon">🔥</span><span>Сложный</span><small>50 сек</small></button>
   </div>
-  <div class="ranking-content"><p id="ranking-status" role="status" class="ranking-status"></p><ol id="ranking-list" class="ranking-list"></ol></div>
+  <div id="ranking-content" class="ranking-content"><p id="ranking-status" role="status" class="ranking-status"></p><ol id="ranking-list" class="ranking-list"></ol></div>
   <div class="ranking-rules-card"><div class="rules-card-icon" aria-hidden="true">🏆</div><div><strong>Как попасть на Доску почёта?</strong><p>Пройдите три этапа на выбранной сложности. Каждый участник финиша записывает своё имя, даже призрак. Общий личный рейтинг недели объединяет подтверждённые сервером и офлайн-результаты с отметками. Поражения остаются только на устройстве.</p></div></div>
   <div class="ranking-footer-actions"><button class="primary back-home">В главное меню ←</button></div>
  </section>`);
@@ -180,8 +202,13 @@ export function mountNetwork(show:(id:string)=>void){
  }
 
  function render(){if(!room||!session)return;const me=room.members.findIndex(m=>m.id===session!.id);if(me<0){disconnect();el('room-entry').hidden=false;el('lobby').hidden=true;el('online-error').textContent='Время возвращения истекло. Войдите в новую комнату.';return}
-  el('room-entry').hidden=true;const playing=room.phase==='playing';el('lobby').hidden=playing||room.phase==='finished';el('online-match').hidden=!playing;el('online-result').hidden=room.phase!=='finished';
+  el('room-entry').hidden=true;const playing=room.phase==='playing';const finished=room.phase==='finished';const between=room.phase==='between';el('lobby').hidden=playing||finished||between;el('online-match').hidden=!playing;el('online-result').hidden=!finished;el('online-stage-clear').hidden=!between;
   el('online').classList.toggle('is-match',playing);root.classList.toggle('is-online-playing',playing);
+  if(playing && (window.matchMedia('(orientation: portrait)').matches || window.innerHeight > window.innerWidth)){
+    el('online-rotate-notice').hidden = false;
+  } else if (!el('online').classList.contains('requires-landscape')) {
+    el('online-rotate-notice').hidden = true;
+  }
   el('invite-code').textContent=room.code;el('lobby-title').textContent=room.phase==='failed'?'Ещё одна попытка?':room.phase==='between'?`Впереди — мир ${room.engine!.level+2}`:'Выберите свою стихию';el('online-start').textContent=room.phase==='failed'?'Повторить уровень':room.phase==='between'?'Следующий уровень':'Начать игру';
   const host=room.host===session.id;
   const currentDiff: DifficultyKey=(room.difficulty as DifficultyKey)||'medium';
@@ -225,6 +252,49 @@ export function mountNetwork(show:(id:string)=>void){
   if(room.phase==='failed'&&room.engine){
    const key=room.id+':'+room.engine.level+':'+room.engine.tick;
    if(defeat.dataset.key!==key){defeat.dataset.key=key;defeat.replaceChildren();const note=document.createElement('p');note.textContent='Поражение: результат можно сохранить только на этом устройстве. Повтор начнёт этап заново.';defeat.append(note);nameForms(defeat,key,session.token,room.engine.players,me,currentDiff,true);}
+  }
+  if (between && room.engine) {
+    const nextLevel = room.engine.level + 1;
+    const curWorld = WORLDS[room.engine.world];
+    const nextWorldIndex = (room.engine.world + 1) % WORLDS.length;
+    const nextWorld = WORLDS[nextWorldIndex];
+    el('stage-clear-title').textContent = `Мир «${curWorld.name}» пройден!`;
+    el('stage-clear-subtitle').textContent = `Этап ${room.engine.level + 1} из 3 позади. Очки сохранены!`;
+    el('stage-next-world-name').textContent = `Этап ${nextLevel + 1} из 3 · ${nextWorld.name}`;
+
+    const scoresWrap = el('stage-clear-scores');
+    scoresWrap.replaceChildren();
+    room.members.forEach((member, i) => {
+      const p = room!.engine!.players[i];
+      if (!p) return;
+      const hero = CHARACTERS[p.hero];
+      const card = document.createElement('div');
+      card.className = `stage-score-card ${member.id === session!.id ? 'is-you' : ''}`;
+      card.innerHTML = `
+        ${portraitMarkup(hero)}
+        <div class="stage-score-info">
+          <strong>${member.id === session!.id ? 'Вы' : `Игрок ${i + 1}`} · ${hero.name}</strong>
+          <small>${p.lives === 0 ? '👻 Призрак' : `${p.lives} ♥`}${member.ready ? ' · ✓ Готов' : ' · Ждёт'}</small>
+          <b>${p.score} очков</b>
+        </div>
+      `;
+      scoresWrap.append(card);
+    });
+
+    const mine = room.members[me];
+    const allReady = room.members.length >= 2 && room.members.every((m, i) => room!.engine?.players[i]?.eligible === false || (m.ready && m.connected));
+    const stageReadyBtn = el<HTMLButtonElement>('stage-clear-ready');
+    stageReadyBtn.disabled = mine.ready || !mine.connected;
+    stageReadyBtn.textContent = mine.ready ? '✓ Вы готовы' : 'Готов к следующему миру ✓';
+
+    const stageStartBtn = el<HTMLButtonElement>('stage-clear-start');
+    stageStartBtn.hidden = !host;
+    stageStartBtn.disabled = !allReady;
+    el('stage-clear-guidance').textContent = !allReady
+      ? 'Ждём готовности остальных участников…'
+      : host
+        ? 'Все готовы! Создатель комнаты может начинать.'
+        : 'Все готовы! Ждём старта от создателя комнаты.';
   }
   if(playing&&room.engine){
     const key=session.id+room.members.map(m=>m.id).join(',');
@@ -536,7 +606,42 @@ export function mountNetwork(show:(id:string)=>void){
  el('create-room').onclick=()=>void enter('rooms');el('join-room').onsubmit=e=>{e.preventDefault();void enter(`rooms/${el<HTMLInputElement>('room-code').value}/join`)};
  el('online-difficulty-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-diff]');if(card&&!card.disabled&&card.dataset.onlineDiff)lobbyAction('difficulty',{difficulty:card.dataset.onlineDiff},next=>next.difficulty===card.dataset.onlineDiff);};
  el('online-hero-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-hero]');if(card&&!card.disabled)lobbyAction('hero',{hero:Number(card.dataset.onlineHero)},next=>next.members.find(member=>member.id===session?.id)?.hero===Number(card.dataset.onlineHero))};
- el('online-ready').onclick=()=>lobbyAction('ready',{},next=>next.members.find(member=>member.id===session?.id)?.ready===true);el('online-start').onclick=()=>{const phase=room?.phase;lobbyAction('start',{},next=>next.phase!==phase)};el('online-back').onclick=()=>{disconnect();show('home')};el('copy-invite').onclick=()=>{if(room)void navigator.clipboard.writeText(`${location.origin}/?room=${room.code}`).then(()=>{el('connection-status').textContent='Приглашение скопировано'}).catch(()=>{el('online-error').textContent=`${location.origin}/?room=${room!.code}`})};
+ function checkPhoneOrientationForReady(): boolean {
+   const isPortrait = window.matchMedia('(orientation: portrait)').matches || window.innerHeight > window.innerWidth;
+   const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+   if (isPortrait && isTouch) {
+     el('online').classList.add('requires-landscape');
+     el('online-rotate-notice').hidden = false;
+     el('lobby-guidance').textContent = 'Пожалуйста, поверните телефон горизонтально перед готовностью!';
+     return false;
+   }
+   el('online').classList.remove('requires-landscape');
+   el('online-rotate-notice').hidden = true;
+   return true;
+ }
+ function updateOrientationState() {
+   const isLandscape = window.innerWidth >= window.innerHeight;
+   if (isLandscape) {
+     el('online').classList.remove('requires-landscape');
+     el('online-rotate-notice').hidden = true;
+   } else if (room?.phase === 'playing') {
+     el('online-rotate-notice').hidden = false;
+   }
+ }
+ window.addEventListener('resize', updateOrientationState);
+ window.addEventListener('orientationchange', updateOrientationState);
+ el('online-ready').onclick=()=>{
+   if(!checkPhoneOrientationForReady()) return;
+   lobbyAction('ready',{},next=>next.members.find(member=>member.id===session?.id)?.ready===true);
+ };
+ el('online-start').onclick=()=>{const phase=room?.phase;lobbyAction('start',{},next=>next.phase!==phase)};
+ el('stage-clear-ready').onclick=()=>{
+   if(!checkPhoneOrientationForReady()) return;
+   lobbyAction('ready',{},next=>next.members.find(member=>member.id===session?.id)?.ready===true);
+ };
+ el('stage-clear-start').onclick=()=>{const phase=room?.phase;lobbyAction('start',{},next=>next.phase!==phase)};
+ el('online-back').onclick=()=>{disconnect();show('home')};
+ el('copy-invite').onclick=()=>{if(room)void navigator.clipboard.writeText(`${location.origin}/?room=${room.code}`).then(()=>{el('connection-status').textContent='Приглашение скопировано'}).catch(()=>{el('online-error').textContent=`${location.origin}/?room=${room!.code}`})};
  const held=new Set<string>();const release=(source:string)=>{held.delete(source);if(!held.size)transmit('duck',{pressed:false})};
  el('online-cast').onpointerdown=e=>{e.preventDefault();transmit('cast')};
  el('online-dash').onpointerdown=e=>{e.preventDefault();transmit('dash')};
@@ -545,79 +650,151 @@ export function mountNetwork(show:(id:string)=>void){
  const recovery=document.createElement('section'); recovery.className='ranking-recovery'; el('ranking').append(recovery); mountRankingRecovery(recovery,api);
  let currentRankingDiff: DifficultyKey = 'medium';
  let rankingLoading = false;
- async function ranking(diff: DifficultyKey = currentRankingDiff){
-  if(rankingLoading)return;
+ let rankingSeq = 0;
+
+ function renderRankingRows(entries: {name: string; score: number; provenance?: string}[], target: HTMLElement){
+  target.replaceChildren();
+  entries.slice(0, TOP_RANKING_LIMIT).forEach((row, i) => {
+   const li = document.createElement('li'), rank = i + 1;
+   li.className = `ranking-row ${rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other'}`;
+   li.style.setProperty('--row-idx', String(i));
+   const badge = document.createElement('span'); badge.className = 'rank-badge';
+   badge.textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
+   const name = document.createElement('span'); name.className = 'rank-name'; name.textContent = row.name;
+   const provenance = document.createElement('small'); provenance.className = 'provenance-badge';
+   provenance.textContent = 'provenance' in row && row.provenance === 'verified' ? '✓ Подтверждён сервером' : 'Офлайн · без проверки';
+   name.append(provenance);
+   const score = document.createElement('strong'); score.className = 'rank-score';
+   score.innerHTML = `${row.score} <small>очков</small>`;
+   li.append(badge, name, score);
+   target.append(li);
+  });
+ }
+
+ async function animateRankingExit(list: HTMLElement, status: HTMLElement): Promise<void> {
+  const rows = Array.from(list.children) as HTMLElement[];
+  const hasStatusContent = status.children.length > 0 || Boolean(status.textContent?.trim());
+  if (!rows.length && !hasStatusContent) {
+   return;
+  }
+  const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if (prefersReduced) {
+   list.replaceChildren();
+   status.replaceChildren();
+   status.textContent = '';
+   status.className = 'ranking-status';
+   return;
+  }
+  rows.forEach((row, i) => {
+   row.classList.add('is-exiting');
+   row.style.setProperty('--exit-idx', String(Math.min(i, 8)));
+  });
+  if (hasStatusContent) {
+   status.classList.add('is-exiting');
+  }
+  await new Promise(r => setTimeout(r, 180));
+  list.replaceChildren();
+  status.replaceChildren();
+  status.textContent = '';
+  status.classList.remove('is-exiting');
+  status.className = 'ranking-status';
+ }
+
+ async function ranking(diff: DifficultyKey = currentRankingDiff, force = false){
+  if(rankingLoading && !force)return;
   rankingLoading = true;
+  const seq = ++rankingSeq;
   const tabs = document.querySelectorAll<HTMLButtonElement>('.ranking-tab');
   const reload = el<HTMLButtonElement>('ranking-reload');
+  const status = el('ranking-status'), list = el('ranking-list'), weekEl = el('ranking-week');
+  const content = el<HTMLElement>('ranking-content') || list.parentElement;
+
   tabs.forEach(tab => { tab.disabled = true; });
   reload.disabled = true;
-  el('ranking-list').setAttribute('aria-busy', 'true');
+  reload.classList.add('is-spinning');
+  list.setAttribute('aria-busy', 'true');
   currentRankingDiff = diff;
-  await syncPendingRankings(api).catch(error=>console.error('Ranking storage',error));
-  document.querySelectorAll<HTMLElement>('.ranking-tab').forEach(tab => {
+
+  tabs.forEach(tab => {
    const isSel = tab.dataset.diff === diff;
    tab.classList.toggle('is-active', isSel);
    tab.setAttribute('aria-selected', String(isSel));
   });
-  const status=el('ranking-status'),list=el('ranking-list'),weekEl=el('ranking-week');
-  status.textContent='Связываемся с книгой рекордов…';status.className='ranking-status is-loading';
-  list.replaceChildren();
-  weekEl.textContent='';
+
+  if (content) {
+   const currentH = content.offsetHeight;
+   if (currentH > 0) {
+    content.style.minHeight = `${currentH}px`;
+   }
+  }
+  weekEl.classList.add('is-updating');
+
+  let fetchDone = false;
+  const fetchPromise = (async () => {
+   await syncPendingRankings(api).catch(error => console.error('Ranking storage', error));
+   const res = await api<{week: string; difficulty: string; entries: {name: string; score: number; provenance: string}[]}>(`ranking?difficulty=${diff}`);
+   fetchDone = true;
+   return res;
+  })();
+
+  await animateRankingExit(list, status);
+  if (seq !== rankingSeq) return;
+
+  if (!fetchDone) {
+   status.textContent = 'Связываемся с книгой рекордов…';
+   status.className = 'ranking-status is-loading';
+  }
+
   const cfg = DIFFICULTIES[diff] ?? DIFFICULTIES.medium;
   try{
-   const data=await api<{week:string;difficulty:string;entries:{name:string;score:number;provenance:string}[]}>(`ranking?difficulty=${diff}`);
-   weekEl.textContent=`Турнирная неделя с ${data.week} · Топ 20 игроков сложности «${cfg.name}» (${cfg.levelSeconds} сек) · обновление в понедельник в 00:00 МСК`;
-   if(!data.entries||!data.entries.length){
-    status.className='ranking-status';
-    status.innerHTML=`<div class="ranking-empty"><span class="empty-rune" aria-hidden="true">${cfg.icon}</span><strong>Свиток рекордов сложности «${cfg.name}» пока пуст!</strong><p>Турнир этой недели только начался. Пройдите три этапа и станьте первыми чемпионами недели на сложности «${cfg.name}»!</p></div>`;
+   const data = await fetchPromise;
+   if (seq !== rankingSeq) return;
+   status.textContent = '';
+   status.className = 'ranking-status';
+   weekEl.textContent = `Турнирная неделя с ${data.week} · Топ 20 игроков сложности «${cfg.name}» (${cfg.levelSeconds} сек) · обновление в понедельник в 00:00 МСК`;
+   weekEl.classList.remove('is-updating');
+   if(!data.entries || !data.entries.length){
+    status.className = 'ranking-status';
+    status.innerHTML = `<div class="ranking-empty"><span class="empty-rune" aria-hidden="true">${cfg.icon}</span><strong>Свиток рекордов сложности «${cfg.name}» пока пуст!</strong><p>Турнир этой недели только начался. Пройдите три этапа и станьте первыми чемпионами недели на сложности «${cfg.name}»!</p></div>`;
     return;
    }
-   status.textContent='';status.className='ranking-status';
-   data.entries.slice(0,TOP_RANKING_LIMIT).forEach((row,i)=>{
-    const li=document.createElement('li'),rank=i+1;
-    li.className=`ranking-row ${rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-other'}`;
-    const badge=document.createElement('span');badge.className='rank-badge';
-    badge.textContent=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':String(rank);
-    const name=document.createElement('span');name.className='rank-name';name.textContent=row.name; const provenance=document.createElement('small'); provenance.className='provenance-badge'; provenance.textContent='provenance' in row && row.provenance==='verified'?'✓ Подтверждён сервером':'Офлайн · без проверки'; name.append(provenance);
-    const score=document.createElement('strong');score.className='rank-score';
-    score.innerHTML=`${row.score} <small>очков</small>`;
-    li.append(badge,name,score);list.append(li);
-   });
+   renderRankingRows(data.entries, list);
   }catch{
+   if (seq !== rankingSeq) return;
    try{
     const localList = getLocalRecords(diff);
     if(localList.length){
-     weekEl.textContent=`Рекорды на этом устройстве (офлайн) · Топ 20 игроков сложности «${cfg.name}» (${cfg.levelSeconds} сек)`;
-     status.textContent='';status.className='ranking-status';
-     localList.forEach((row,i)=>{
-      const li=document.createElement('li'),rank=i+1;
-      li.className=`ranking-row ${rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-other'}`;
-      const badge=document.createElement('span');badge.className='rank-badge';
-      badge.textContent=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':String(rank);
-      const name=document.createElement('span');name.className='rank-name';name.textContent=row.name; const provenance=document.createElement('small'); provenance.className='provenance-badge'; provenance.textContent='provenance' in row && row.provenance==='verified'?'✓ Подтверждён сервером':'Офлайн · без проверки'; name.append(provenance);
-      const score=document.createElement('strong');score.className='rank-score';
-      score.innerHTML=`${row.score} <small>очков</small>`;
-      li.append(badge,name,score);list.append(li);
-     });
+     weekEl.textContent = `Рекорды на этом устройстве (офлайн) · Топ 20 игроков сложности «${cfg.name}» (${cfg.levelSeconds} сек)`;
+     weekEl.classList.remove('is-updating');
+     status.textContent = '';
+     status.className = 'ranking-status';
+     renderRankingRows(localList, list);
      return;
     }
    }catch{}
-   status.className='ranking-status is-error';
-   status.innerHTML='<div class="ranking-error"><span aria-hidden="true">📡</span><p>Нет связи с сервером рейтинга. Проверьте интернет и нажмите «Обновить».</p></div>';
+   weekEl.classList.remove('is-updating');
+   status.className = 'ranking-status is-error';
+   status.innerHTML = '<div class="ranking-error"><span aria-hidden="true">📡</span><p>Нет связи с сервером рейтинга. Проверьте интернет и нажмите «Обновить».</p></div>';
   }finally{
-   rankingLoading = false;
-   tabs.forEach(tab => { tab.disabled = false; });
-   reload.disabled = false;
-   list.setAttribute('aria-busy', 'false');
+   if (seq === rankingSeq) {
+    rankingLoading = false;
+    tabs.forEach(tab => { tab.disabled = false; });
+    reload.disabled = false;
+    reload.classList.remove('is-spinning');
+    list.setAttribute('aria-busy', 'false');
+    if (content) {
+     content.style.minHeight = '';
+    }
+   }
   }
  }
  window.addEventListener('online',()=>void syncPendingRankings(api).catch(error=>console.error('Ranking storage',error)));
  void syncPendingRankings(api).catch(error=>console.error('Ranking storage',error));
- el('ranking-reload').onclick=()=>void ranking(currentRankingDiff);
+ el('ranking-reload').onclick=()=>void ranking(currentRankingDiff, true);
  document.querySelectorAll<HTMLElement>('.ranking-tab').forEach(tab=>{
   tab.onclick=()=>{
    const diff = (tab.dataset.diff as DifficultyKey) || 'medium';
+   if (diff === currentRankingDiff && !rankingLoading) return;
    void ranking(diff);
   };
  });

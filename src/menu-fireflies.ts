@@ -69,10 +69,26 @@ export function updateFirefly(firefly: Firefly, dt: number, width: number, heigh
 
   // Soft wrap around edges with buffer
   const pad = 24;
-  if (firefly.x < -pad) firefly.x = width + pad;
-  else if (firefly.x > width + pad) firefly.x = -pad;
-  if (firefly.y < -pad) firefly.y = height + pad;
-  else if (firefly.y > height + pad) firefly.y = -pad;
+  let wrapped = false;
+  if (firefly.x < -pad) {
+    firefly.x = width + pad;
+    wrapped = true;
+  } else if (firefly.x > width + pad) {
+    firefly.x = -pad;
+    wrapped = true;
+  }
+  if (firefly.y < -pad) {
+    firefly.y = height + pad;
+    wrapped = true;
+  } else if (firefly.y > height + pad) {
+    firefly.y = -pad;
+    wrapped = true;
+  }
+
+  // Clear trail on wrap to prevent drawing cross-screen streaks
+  if (wrapped) {
+    firefly.trail.length = 0;
+  }
 }
 
 export class MenuFireflies {
@@ -174,10 +190,18 @@ export class MenuFireflies {
       // 1. Draw light trail
       if (f.trail.length > 1) {
         ctx.beginPath();
-        ctx.moveTo(f.x, f.y);
+        let prevX = f.x;
+        let prevY = f.y;
+        ctx.moveTo(prevX, prevY);
         for (let i = 0; i < f.trail.length; i++) {
           const pt = f.trail[i];
-          ctx.lineTo(pt.x, pt.y);
+          if (Math.hypot(pt.x - prevX, pt.y - prevY) > 50) {
+            ctx.moveTo(pt.x, pt.y);
+          } else {
+            ctx.lineTo(pt.x, pt.y);
+          }
+          prevX = pt.x;
+          prevY = pt.y;
         }
         ctx.strokeStyle = f.palette.glow;
         ctx.lineWidth = f.baseRadius * 0.9;

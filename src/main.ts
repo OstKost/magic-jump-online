@@ -215,6 +215,18 @@ ${[0,1].map(row=>`<div class="player-window player-window-${row}" data-player-wi
         <span id="vibration-state" class="setting-badge">Вкл.</span>
       </button>
     </div>
+    <div class="setting-card">
+      <div class="setting-info">
+        <span class="setting-icon" aria-hidden="true">⛶</span>
+        <div>
+          <strong>Полноэкранный режим</strong>
+          <small>Скрыть адресную строку браузера и играть во весь экран</small>
+        </div>
+      </div>
+      <button id="fullscreen-toggle" class="setting-toggle" aria-label="Переключить полноэкранный режим">
+        <span id="fullscreen-state" class="setting-badge">Выкл.</span>
+      </button>
+    </div>
     <div class="setting-card setting-download-card">
       <div class="setting-info">
         <span class="setting-icon" aria-hidden="true">📲</span>
@@ -711,10 +723,11 @@ document.querySelector('#install-settings')?.addEventListener('click',()=>showSc
 document.querySelectorAll('.go-install').forEach(btn=>btn.addEventListener('click',()=>showScreen('install')));
 document.querySelector('#exit-menu')!.addEventListener('click', () => {
   showScreen('splash');
-  if (document.fullscreenElement) void document.exitFullscreen();
+  exitAppFullscreen();
 });
 async function startLocal(count:number, difficulty: DifficultyKey = selectedDifficulty){
   if(startingLocal)return;
+  requestAppFullscreen();
   startingLocal=true;
   const screen = document.querySelector<HTMLElement>('#difficulty-select')!;
   const buttons = screen.querySelectorAll<HTMLButtonElement>('button');
@@ -1520,6 +1533,7 @@ document.querySelector('#online-menu')!.addEventListener('click',()=>{
     return;
   }
   adventure?.goHome();
+  requestAppFullscreen();
   network.open();
 });
 document.querySelector('#ranking-menu')!.addEventListener('click',()=>network.ranking());
@@ -1531,10 +1545,78 @@ function updateMusicToggle(){musicToggle.textContent=gameAudio.music?'♫ Муз
 musicToggle.addEventListener('click',()=>{gameAudio.toggle('music');updateMusicToggle();});
 updateMusicToggle();document.querySelector('#sound')?.parentElement?.append(musicToggle);
 
+function uiIconSvg(name: 'sound-on'|'sound-off'|'music-on'|'music-off'|'fullscreen-on'|'fullscreen-off'): string {
+  switch(name) {
+    case 'sound-on':
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+    case 'sound-off':
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+    case 'music-on':
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+    case 'music-off':
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle><line x1="2" y1="2" x2="22" y2="22"></line></svg>`;
+    case 'fullscreen-on':
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>`;
+    case 'fullscreen-off':
+      return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6m0 0v6m0-6-7 7m17-11h-6m0 0V4m0 6 7-7m-7 17v-6m0 0h6m-6 0 7 7M10 4v6m0 0H4m6 0L3 3"></path></svg>`;
+  }
+}
+
+export function requestAppFullscreen() {
+  const elem = document.documentElement as HTMLElement & {
+    webkitRequestFullscreen?: () => Promise<void>;
+  };
+  if (!document.fullscreenElement) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(() => {});
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    }
+  }
+}
+
+export function exitAppFullscreen() {
+  const doc = document as Document & {
+    webkitExitFullscreen?: () => Promise<void>;
+  };
+  if (document.fullscreenElement) {
+    if (doc.exitFullscreen) {
+      doc.exitFullscreen().catch(() => {});
+    } else if (doc.webkitExitFullscreen) {
+      doc.webkitExitFullscreen();
+    }
+  }
+}
+
+export function toggleAppFullscreen() {
+  if (!document.fullscreenElement) {
+    requestAppFullscreen();
+  } else {
+    exitAppFullscreen();
+  }
+}
+
+function updateFullscreenUI() {
+  const isFs = Boolean(document.fullscreenElement);
+  document.querySelectorAll<HTMLButtonElement>('[data-app-action="fullscreen"]').forEach(btn => {
+    btn.innerHTML = uiIconSvg(isFs ? 'fullscreen-off' : 'fullscreen-on');
+    btn.setAttribute('aria-label', isFs ? 'Выйти из полноэкранного режима' : 'Во весь экран');
+    btn.setAttribute('title', isFs ? 'Обычный экран' : 'Во весь экран');
+  });
+  const stateBadge = document.querySelector<HTMLElement>('#fullscreen-state');
+  if (stateBadge) stateBadge.textContent = isFs ? 'Вкл.' : 'Выкл.';
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenUI);
+document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+document.querySelector('#fullscreen-toggle')?.addEventListener('click', toggleAppFullscreen);
+
 function renderAudioButtons(){
   document.querySelectorAll<HTMLButtonElement>('[data-audio-channel]').forEach(button=>{
     const channel=button.dataset.audioChannel as 'music'|'sound';
-    button.textContent=channel==='music'?(gameAudio.music?'♫':'♫̸'):(gameAudio.sound?'🔊':'🔇');
+    button.innerHTML=channel==='music'
+      ? uiIconSvg(gameAudio.music ? 'music-on' : 'music-off')
+      : uiIconSvg(gameAudio.sound ? 'sound-on' : 'sound-off');
     button.setAttribute('aria-pressed',String(gameAudio[channel]));
     button.setAttribute('aria-label',`${gameAudio[channel]?'Выключить':'Включить'} ${channel==='music'?'музыку':'звуки'}`);
   });
@@ -1543,8 +1625,26 @@ function renderAudioButtons(){
 for(const screen of ['play-screen','online']){
   const bar=document.createElement('div');bar.className='audio-buttons';
   for(const channel of ['sound','music'] as const){const button=document.createElement('button');button.dataset.audioChannel=channel;button.className='icon-button';button.onclick=()=>{gameAudio.toggle(channel);renderAudioButtons();};bar.append(button);}
+  const fsBtn = document.createElement('button');
+  fsBtn.dataset.appAction = 'fullscreen';
+  fsBtn.className = 'icon-button fullscreen-btn';
+  fsBtn.onclick = () => toggleAppFullscreen();
+  bar.append(fsBtn);
   document.getElementById(screen)?.append(bar);
 }
 renderAudioButtons();
+updateFullscreenUI();
 document.querySelector('#sound')?.addEventListener('click',renderAudioButtons);
 musicToggle.addEventListener('click',renderAudioButtons);
+
+// Prevent double-tap zoom, gesture pinch zoom, and double-click zoom
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (event) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    event.preventDefault();
+  }
+  lastTouchEnd = now;
+}, { passive: false });
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });

@@ -29,7 +29,8 @@
 .lane-location { font: 600 13px/1.2 Georgia, serif; text-shadow: 0 2px 6px #081a29; text-wrap: balance; }
 .lane-timer { font: 700 15px/1.3 system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 1px; padding: 4px 13px; background: #0b2138cf; border: 1px solid #e8cf9e33; border-radius: 20px; }
 #play-screen .arena-toolbar { inset: 12px 12px auto auto; width: auto; height: 36px; gap: 6px; z-index: 7; }
-#play-screen .arena-toolbar .icon-button { width: 36px; height: 36px; border: 1px solid #e8cf9e40; background: #0b2138df; color: #f1dbb5; font-size: 20px; }
+#play-screen .arena-toolbar .icon-button { width: 36px; height: 36px; border: 1px solid #e8cf9e40; background: #0b2138df; color: #f1dbb5; font-size: 16px; padding: 0; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+#play-screen .arena-toolbar .icon-button svg { width: 18px; height: 18px; }
 #play-screen .level-progress { position: absolute; top: 45px; right: 1px; width: 75px; height: 2px; background: #fff2; border-radius: 2px; display: block; overflow: hidden; }
 #play-screen .level-progress i { display: block; height: 100%; width: var(--progress, 0%); background: #e4bd82; }
 #play-screen .player-controls {
@@ -119,7 +120,7 @@
 #online.is-match .online-wordmark,
 #online.is-match #connection-status,
 #online.is-match #online-error { display: none; }
-#online.is-match .online-header .icon-button { width: 36px; height: 36px; background: #0b2138df; border: 1px solid #e8cf9e55; padding: 0; display: grid; place-items: center; }
+#online.is-match .online-header .icon-button { width: 36px; height: 36px; background: #0b2138df; border: 1px solid #e8cf9e55; padding: 0; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; font-size: 16px; }
 #online.online-screen #online-match { max-width: none; width: 100%; position: absolute; inset: 0; margin: 0; --friend-row-height: clamp(60px,19vh,160px); display: grid; grid-template-rows: var(--friend-row-height) minmax(0,1fr) calc(var(--control-bar-height) + env(safe-area-inset-bottom)); gap: 0; }
 #online.is-match { --friend-row-height: clamp(60px,19vh,160px); }
 #online #opponent-lanes { display: flex; flex-direction: row; justify-content: center; gap: 4px; min-height: 0; padding: 4px; background: #091e2b; border-bottom: 1px solid #d9bd7f66; }
@@ -159,7 +160,8 @@
   .lane-location { font-size: 11px; }
   .lane-timer { font-size: 12px; padding: 3px 10px; }
   #play-screen .arena-toolbar { inset: 8px 8px auto auto; height: 30px; gap: 5px; }
-  #play-screen .arena-toolbar .icon-button { width: 30px; height: 30px; font-size: 17px; }
+  #play-screen .arena-toolbar .icon-button { width: 30px; height: 30px; font-size: 14px; }
+  #play-screen .arena-toolbar .icon-button svg { width: 14px; height: 14px; }
   #play-screen .level-progress { top: 35px; width: 64px; }
   #play-screen .ready-card { padding: 10px 15px; width: min(70%,380px); }
   #play-screen .ready-card h2 { font-size: 20px; margin: 4px 0; }
@@ -175,7 +177,8 @@
   .online-hud strong { font-size: 9px; }.online-hud .online-lives { font-size: 11px; }.online-hud b { font-size: 14px; }
   #online-clock { top: calc(var(--friend-row-height) + 8px); }
   #online.is-match>.online-header { top: calc(var(--friend-row-height) + 8px); right: 8px; }
-  #online.is-match .online-header .icon-button { width: 30px; height: 30px; }
+  #online.is-match .online-header .icon-button { width: 30px; height: 30px; font-size: 14px; }
+  #online.is-match .online-header .icon-button svg { width: 14px; height: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   #play-screen button, #online .online-controls button { transition: none; }

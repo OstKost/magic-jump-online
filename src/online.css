@@ -5,7 +5,7 @@
   --camp-muted: #b7c5c5;
   font-family: Georgia, 'Times New Roman', serif;
   color: var(--camp-ink);
-  padding: 18px clamp(20px, 4vw, 64px) 24px;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) max(clamp(20px, 4vw, 64px), env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) max(clamp(20px, 4vw, 64px), env(safe-area-inset-left, 0px));
   background: linear-gradient(110deg, #0c202cf2, #102934e3 58%, #102432e6), url('/art/menu-background.png') center/cover;
   isolation: isolate;
 }
@@ -18,7 +18,7 @@
   background: radial-gradient(ellipse at 50% 5%, #b9d9c518, transparent 65%);
 }
 #online.online-screen .online-header { max-width: 1320px; margin: 0 auto; min-height: 46px; gap: 16px; border-bottom: 1px solid #d9bb8130; padding-bottom: 12px; }
-.online-header .icon-button { color: var(--camp-gold); border-color: #d9bb8150; background: #142c38; }
+.online-header .icon-button { color: var(--camp-gold); border-color: #d9bb8150; background: #142c38; padding: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
 .online-wordmark { margin-right: auto; font: 10px/1.5 system-ui, sans-serif; letter-spacing: 3px; color: #c7b892; }
 .online-wordmark i { color: #e8d9b6; padding: 0 12px; font-style: normal; }
 #online.online-screen .connection-status { font: 11px/1.4 system-ui, sans-serif; color: #a9c9b8; text-align: right; max-width: 230px; }
@@ -128,7 +128,7 @@
   #online.online-screen #online-members { grid-template-columns: repeat(2,minmax(0,1fr)); }#online.online-screen .lobby-actions { flex-wrap: wrap; justify-content: stretch; }.lobby-actions p { width: 100%; max-width: none; margin: 0; }#online.online-screen .lobby-actions>.primary { flex: 1; min-width: 0; }
 }
 @media (orientation: landscape) and (max-height: 600px) {
-  #online.online-screen { padding: 8px 3% 10px; }#online.online-screen .online-header { min-height: 32px; padding-bottom: 5px; }.online-header .icon-button { width: 30px; height: 30px; font-size: 17px; }.online-wordmark { font-size: 8px; letter-spacing: 2px; }#online.online-screen .connection-status { font-size: 9px; }
+  #online.online-screen { padding: calc(env(safe-area-inset-top, 0px) + 8px) max(3%, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 10px) max(3%, env(safe-area-inset-left, 0px)); }#online.online-screen .online-header { min-height: 32px; padding-bottom: 5px; }.online-header .icon-button { width: 30px; height: 30px; font-size: 17px; }.online-wordmark { font-size: 8px; letter-spacing: 2px; }#online.online-screen .connection-status { font-size: 9px; }
   .online-intro { margin: 12px 0 17px; }#online.online-screen .online-intro h2 { font-size: 31px; margin: 6px 0; }.online-intro p { font-size: 10px; }#online.online-screen .eyebrow { font-size: 7px; letter-spacing: 2px; }
   .room-paths { max-width: 750px; margin: auto; grid-template-columns: 1fr 30px 1fr; }.room-path { padding: 12px 24px; }.path-runes, .path-key { height: 32px; margin-bottom: 5px; font-size: 29px; }.path-key { font-size: 36px; }.room-path h3 { font-size: 22px; margin: 5px 0; }.room-path p { font-size: 10px; min-height: 28px; margin: 7px 0 12px; }#online.online-screen .primary { min-height: 36px; padding: 9px 12px; font-size: 13px; }
   #online.online-screen #join-room { gap: 6px; }#online.online-screen #join-room label { font-size: 9px; }#online.online-screen #room-code { font-size: 22px; padding-block: 5px; }.online-footnote { padding-top: 14px; margin: 0; font-size: 8px; }

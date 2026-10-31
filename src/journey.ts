@@ -4,7 +4,7 @@ export class Journey {
   selected: number[] = [0, 1];
   choosing: 0 | 1 = 0;
   ready: boolean[] = [false, false];
-  maxHero = 5;
+  maxHero = 6;
   reset(count = this.count) { this.count = count; this.selected = Array.from({length:count},(_,i)=>i); this.choosing = 0; this.resetReady(); }
   choose(character: number) {
     if (!Number.isInteger(character) || character < 0 || character > this.maxHero) return false;

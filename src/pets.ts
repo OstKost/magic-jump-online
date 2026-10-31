@@ -19,6 +19,8 @@ export class Pet {
   }
   private isAnimated: boolean;
   private isMoving = false;
+  private reaction = 0;
+  react() { this.reaction = .65; }
 
   constructor(scene: Phaser.Scene, row: number, floor: number, key = row === 0 ? 'black-cat' : 'ginger-cat') {
     this.key = key;
@@ -40,6 +42,12 @@ export class Pet {
 
   update(dt: number, floor: number, ownerY: number, _ducking: boolean) {
     this.age += dt;
+    if(this.key==='stella-cat'){this.reaction=Math.max(0,this.reaction-dt);this.sprite.setTexture(this.key,this.reaction>0?9+Math.floor(this.age*8)%5:4+Math.floor(this.age*10)%5).setY(floor);return;}
+    if(this.key==='sensei-dog'){
+      this.reaction=Math.max(0,this.reaction-dt);
+      this.sprite.setTexture(this.key, this.reaction>0?7+Math.floor(this.age*8)%4:2+Math.floor(this.age*10)%5);
+      this.sprite.y=floor;return;
+    }
     this.changeIn -= dt;
     if (this.changeIn <= 0) {
       // Vary the following distance while staying behind the owner at x = 160.
@@ -100,6 +108,8 @@ export class Pet {
   }
 
   idle(dt: number, floor: number) {
+    if(this.key==='stella-cat'){this.age+=dt;this.sprite.setTexture(this.key,Math.floor(this.age*5)%4).setY(floor);return;}
+    if(this.key==='sensei-dog'){this.age+=dt;this.sprite.setTexture(this.key,Math.floor(this.age*2)%2).setY(floor);return;}
     this.age += dt;
     this.sprite.stop();
     this.isMoving = false;

@@ -186,7 +186,11 @@ func TestRoomLimitAndSocketAuth(t *testing.T) {
 		t.Fatal("duplicate hero must be accepted and changing hero must reset ready")
 	}
 	_ = c.WriteJSON(map[string]any{"type": "hero", "hero": 6})
-	if err = c.ReadJSON(&room); err != nil || room.Members[0].Hero != 3 {
+	if err = c.ReadJSON(&room); err != nil || room.Members[0].Hero != 6 {
+		t.Fatal("Sensei must be selectable immediately", err)
+	}
+	_ = c.WriteJSON(map[string]any{"type": "hero", "hero": 7})
+	if err = c.ReadJSON(&room); err != nil || room.Members[0].Hero != 6 {
 		t.Fatal("invalid hero must be rejected", err)
 	}
 }

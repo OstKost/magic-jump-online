@@ -1,3 +1,4 @@
+import { AnimationV2, StellaAnimation, chooseStellaSpell, actionRandom, chooseSpell } from './animation-v2';
 import { OBSTACLE_ANIMATIONS, obstacleAnimationKey, obstacleFrame, obstacleFrameRect, obstaclePhase } from './obstacle-animations';
 import { drawTerrain } from './terrain-art';
 import { getBonusFloatOffset, getBonusGlowAlpha, getBonusFrameIndex, drawSparkleStar } from './bonus-art';
@@ -8,9 +9,10 @@ import './online.css';
 import { actionIcon, castButtonContent, dashButtonContent } from './game-controls';
 import QRCode from 'qrcode';
 import { renderElementalQR } from './elemental-qr';
-import { CHARACTERS, portraitMarkup, petMarkup } from './characters';
+import { CHARACTERS, availableCharacters, portraitMarkup, petMarkup } from './characters';
 import { WORLDS, JUMP_VELOCITY, DIFFICULTIES, type DifficultyKey } from './rules';
 import { mountRankingRecovery, rankingDeliveryMessage, RankingApiError, getLocalRecords, submitRankingResult, syncPendingRankings, openSkipConfirm, TOP_RANKING_LIMIT } from './ranking.ts';
+import { setButtonProgress } from './button-progress';
 
 export interface Action { tick:number; player:number; kind:'jump'|'duck'|'cast'|'dash'; pressed:boolean }
 export interface Attempt { id:string; token:string; seed:number; count:number; difficulty?:string }
@@ -30,6 +32,7 @@ export function nameForms(target:HTMLElement,id:string,token:string,players:{sco
  });
 }
 
+const senseiAnimations = new Map<number, { animation: AnimationV2; jumps: number; duck: boolean; ready: number; lives: number; hurtUntil: number }>();
 interface Body {grounded?:boolean;fallUntil?:number;readyAt?:number;readyDashAt?:number;lives:number;score:number;y:number;velocity:number;duck:boolean;hero:number;connected:boolean;eligible:boolean;jumps?:number}
 interface Item {at?:number;offset?:number;width?:number;height?:number;defeatedAt?:number;x:number;player:number;passed:boolean;kind:string;obstacle:string;variant:number}
 interface Room {serverTime?:number;persistence?:'pending'|'saved'|'error'|'device-only';persistenceError?:string;code:string;id:string;host:string;phase:string;difficulty?:DifficultyKey;members:{id:string;hero:number;ready:boolean;connected:boolean;reconnectDeadline?:number}[];engine?:{tick:number;level:number;world:number;players:Body[];items:Item[];projectiles?:{y?:number;x:number;distance:number;player:number}[]}}
@@ -98,19 +101,31 @@ export function mountNetwork(show:(id:string)=>void){
  let lastTick=0,lastReceived=0;const canvases=new Map<number,HTMLCanvasElement>();
  const images=new Map<string,HTMLImageElement>();const atlases=new Map<string,Record<string,{frame:{x:number;y:number;w:number;h:number}}>>();
  function loadImage(path:string){let image=images.get(path);if(!image){image=new Image();image.src=path;images.set(path,image)}return image}
- for(const hero of CHARACTERS){const atlas=hero.clean?'atlas-elemental':'atlas';loadImage(`/assets/characters/${hero.key}/${atlas}.png`);void fetch(`/assets/characters/${hero.key}/${atlas}.json`).then(r=>r.json()).then(data=>atlases.set(hero.key,data.frames)).catch(()=>{});loadImage(`/assets/pets/${hero.petRest}.png`)}
+ for(const hero of CHARACTERS){const atlas=hero.key==='stella'?'atlas-v2':hero.clean?'atlas-elemental':'atlas';loadImage(`/assets/characters/${hero.key}/${atlas}.png`);void fetch(`/assets/characters/${hero.key}/${atlas}.json`).then(r=>r.json()).then(data=>atlases.set(hero.key,data.frames)).catch(()=>{});loadImage(`/assets/pets/${hero.petRest}.png`)}
  for(const animation of Object.values(OBSTACLE_ANIMATIONS))loadImage(animation.path);
  function transmit(type:string,extra:object={}){if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({type,...extra}));if(type==='jump'&&room?.phase==='playing'&&room.engine){const me=room.members.findIndex(m=>m.id===session?.id);const p=room.engine.players[me];if(p&&!p.duck){if(p.y===0){p.velocity=JUMP_VELOCITY;p.y=JUMP_VELOCITY*.02;p.jumps=1;}else if((p.jumps||0)<2){p.velocity=JUMP_VELOCITY;p.jumps=2;}}}}}
  let entering = false, entryVersion = 0, entryTimer: number | undefined;
  let pendingLobby: { accepts: (next: Room) => boolean; timer: number } | undefined;
  let lobbyConnected = false;
- function entryBusy(busy: boolean){
+ function entryBusy(busy: boolean, action?: 'create' | 'join'){
   entering = busy;
-  el<HTMLButtonElement>('create-room').disabled = busy;
+  const createBtn = el<HTMLButtonElement>('create-room');
+  const joinBtn = el<HTMLFormElement>('join-room').querySelector<HTMLButtonElement>('button')!;
+  createBtn.disabled = busy;
   el<HTMLButtonElement>('room-code').disabled = busy;
-  el<HTMLFormElement>('join-room').querySelector('button')!.disabled = busy;
+  joinBtn.disabled = busy;
   el('room-entry').setAttribute('aria-busy', String(busy));
   el('connection-status').classList.toggle('request-loading', busy);
+  if (busy) {
+    if (action === 'create') {
+      setButtonProgress(createBtn, { loading: true, determinate: false, loadingText: 'Создаём комнату…' });
+    } else if (action === 'join') {
+      setButtonProgress(joinBtn, { loading: true, determinate: false, loadingText: 'Подключение…' });
+    }
+  } else {
+    setButtonProgress(createBtn, { loading: false, readyText: 'Создать комнату ✦' });
+    setButtonProgress(joinBtn, { loading: false, readyText: 'Войти →' });
+  }
  }
  function clearLobbyPending(){
   if(pendingLobby)window.clearTimeout(pendingLobby.timer);
@@ -119,9 +134,22 @@ export function mountNetwork(show:(id:string)=>void){
  }
  function lobbyBusy(){
   const busy = !!pendingLobby || !lobbyConnected;
+  const readyBtn = el<HTMLButtonElement>('online-ready');
+  const startBtn = el<HTMLButtonElement>('online-start');
   if(busy){
    el('lobby').querySelectorAll<HTMLButtonElement>('#online-hero-picker button, #online-difficulty-picker button, #online-ready, #online-start').forEach(button => { button.disabled = true; });
    el('lobby-guidance').textContent = pendingLobby ? 'Ждём подтверждения…' : 'Ждём подключения…';
+   if (pendingLobby) {
+     if (readyBtn && !readyBtn.hidden) {
+       setButtonProgress(readyBtn, { loading: true, determinate: false, loadingText: 'Ожидание…' });
+     }
+     if (startBtn && !startBtn.hidden) {
+       setButtonProgress(startBtn, { loading: true, determinate: false, loadingText: 'Запуск…' });
+     }
+   }
+  } else {
+    if (readyBtn) setButtonProgress(readyBtn, { loading: false });
+    if (startBtn) setButtonProgress(startBtn, { loading: false });
   }
   el('lobby').setAttribute('aria-busy', String(busy));
   el('lobby-guidance').classList.toggle('request-loading', busy);
@@ -176,11 +204,11 @@ export function mountNetwork(show:(id:string)=>void){
   ws.onclose=e=>{if(ws!==socket||closed)return;window.clearInterval(heartbeat);clearControls();lobbyConnected=false;void pollReconnect();window.clearInterval(reconnectPoll);reconnectPoll=window.setInterval(()=>void pollReconnect(),1000);clearLobbyPending();render();lobbyBusy();if(e.code===1008){expireSession();return}if(!closed){reconnectMessage();retry=window.setTimeout(connect,1200)}};
   ws.onerror=()=>{if(ws!==socket||closed)return;el('connection-status').textContent='Нет связи с сервером'};
  }
- async function enter(path:string){
+ async function enter(path:string, action?: 'create' | 'join'){
   if(entering)return;
   disconnect();
   const version = entryVersion;
-  entryBusy(true);
+  entryBusy(true, action);
   el('online-error').textContent='';
   el('connection-status').textContent='Открываем путь…';
   try{
@@ -192,12 +220,14 @@ export function mountNetwork(show:(id:string)=>void){
     disconnect();el('room-entry').hidden=false;
     el('connection-status').textContent='';
     el('online-error').textContent='Не удалось подключиться к комнате. Попробуйте ещё раз.';
+    entryBusy(false);
    },12000);
    connect();
   }catch(err){
    if(version !== entryVersion)return;
    disconnect();el('room-entry').hidden=false;
    el('online-error').textContent=String(err);el('connection-status').textContent='';
+   entryBusy(false);
   }
  }
 
@@ -233,8 +263,8 @@ export function mountNetwork(show:(id:string)=>void){
    el('room-count').textContent=`${room.members.length} / 4`;
    if(choosing){
      const unlocked = (()=>{ try { return localStorage.getItem('secret_heroes_unlocked')==='true'; } catch { return false; } })();
-     const available = unlocked ? CHARACTERS : CHARACTERS.slice(0, 4);
-     el('online-hero-picker').innerHTML=available.map((hero,i)=>`<button type="button" class="online-hero-card ${room!.members[me].hero===i?'is-selected':''}" data-online-hero="${i}" aria-pressed="${room!.members[me].hero===i}" aria-label="Выбрать: ${hero.name}, ${hero.element}" style="--hero-color:${hero.color}"><span class="hero-card-element" aria-hidden="true">${hero.symbol}</span>${portraitMarkup(hero)}<strong>${hero.name}</strong><span class="hero-card-element-name">${hero.element}</span><span class="hero-card-pet">${petMarkup(hero)}<small>${hero.petName}</small></span><span class="hero-card-choice">${room!.members[me].hero===i?'✓ Ваш герой':'Выбрать'}</span></button>`).join('');
+     const available = availableCharacters(unlocked);
+     el('online-hero-picker').innerHTML=available.map(({hero,index:i})=>`<button type="button" class="online-hero-card ${room!.members[me].hero===i?'is-selected':''}" data-online-hero="${i}" aria-pressed="${room!.members[me].hero===i}" aria-label="Выбрать: ${hero.name}, ${hero.element}" style="--hero-color:${hero.color}"><span class="hero-card-element" aria-hidden="true">${hero.symbol}</span>${portraitMarkup(hero)}<strong>${hero.name}</strong><span class="hero-card-element-name">${hero.element}</span><span class="hero-card-pet">${petMarkup(hero)}<small>${hero.petName}</small></span><span class="hero-card-choice">${room!.members[me].hero===i?'✓ Ваш герой':'Выбрать'}</span></button>`).join('');
    }
    el('online-members').replaceChildren();
    for(let i=0;i<4;i++){
@@ -580,7 +610,18 @@ export function mountNetwork(show:(id:string)=>void){
     }
    }
    const hero=CHARACTERS[p.hero];
-   for(const shot of engine.projectiles??[])if(shot.player===i)at(shot.x+700*extrapolation,shot.y??-30,()=>{const image=loadImage(`/assets/spells/${hero.key}.png`);if(image.complete&&image.naturalWidth){c.shadowColor=hero.color;c.shadowBlur=12;c.drawImage(image,Math.floor(engine.tick/4)%4*128,0,128,96,-45,-34,90,68);}else drawSpell(c,0,0,hero.key,now/200);});
+   const gameTime=engine.tick*20;
+   let v2=senseiAnimations.get(i);
+   if((hero.key==='sensei'||hero.key==='stella')){
+     if(!v2||gameTime===0){v2={animation:hero.key==='stella'?new StellaAnimation(actionRandom(i+engine.level*131)):new AnimationV2(actionRandom(i+engine.level*131)),jumps:0,duck:false,ready:0,lives:p.lives,hurtUntil:0};senseiAnimations.set(i,v2);}
+     if((p.jumps??0)>v2.jumps)v2.animation.beginJump((p.jumps??0)>=2);
+     if(p.duck&&!v2.duck)v2.animation.beginSlide();
+     if((p.readyAt??0)!==v2.ready){v2.animation.spell=chooseSpell(actionRandom((p.readyAt??0)+i*7919));v2.animation.cast((p.readyAt??0)-500);if(v2.animation instanceof StellaAnimation)v2.animation.stellaSpell=chooseStellaSpell(actionRandom((p.readyAt??0)+i*7919));v2.ready=p.readyAt??0;}
+     if(p.lives<v2.lives)v2.hurtUntil=gameTime+650;
+     v2.jumps=p.jumps??0;v2.duck=p.duck;v2.lives=p.lives;
+   }else v2=undefined;
+   const spellKey=v2?.animation instanceof StellaAnimation?`stella-${v2.animation.stellaSpell}`:v2?`sensei-${v2.animation.spell}`:hero.key;
+   for(const shot of engine.projectiles??[])if(shot.player===i)at(shot.x+700*extrapolation,shot.y??-30,()=>{const image=loadImage(`/assets/spells/${spellKey}.png`);if(image.complete&&image.naturalWidth){c.shadowColor=hero.color;c.shadowBlur=12;c.drawImage(image,Math.floor(engine.tick/4)%4*128,0,128,96,-45,-34,90,68);}else drawSpell(c,0,0,hero.key,now/200);});
    if(i===ownIndex){
      const leftCast=Math.max(0,(p.readyAt??0)-engine.tick*20);
      const castBtn=el<HTMLButtonElement>('online-cast');
@@ -590,20 +631,21 @@ export function mountNetwork(show:(id:string)=>void){
      if(dashBtn){dashBtn.disabled=leftDash>0;dashBtn.querySelector('small')!.textContent=leftDash>0?(leftDash/1000).toFixed(1)+' с':'Готово';dashBtn.style.setProperty('--charge',`${(1-leftDash/2000)*100}%`);}
      el('online-duck').classList.toggle('is-held',p.duck);
    }
-   const atlas=hero.clean?'atlas-elemental':'atlas';
+   const atlas=hero.key==='stella'?'atlas-v2':hero.clean?'atlas-elemental':'atlas';
    let frameName=`run-${String(Math.floor(now/(85/cfg.speedMultiplier))%hero.run).padStart(2,'0')}`;
    if(!p.grounded&&p.y!==0){const flipCount=(hero.key==='kai'||hero.key==='leya')?6:4;frameName=(p.jumps||0)>=2?`flip-${String(Math.floor(now/80)%flipCount).padStart(2,'0')}`:p.velocity< -150?'jump-00':p.velocity<150?'jump-01':'jump-02';}
    else if(p.duck)frameName=`duck-${String(hero.duck-1).padStart(2,'0')}`;
+   if(v2)frameName=v2.animation.frame(gameTime,{hurt:gameTime<v2.hurtUntil,airborne:!p.grounded&&p.y!==0,double:(p.jumps??0)>=2,duck:p.duck,velocity:p.velocity});
    const frame=atlases.get(hero.key)?.[frameName]?.frame,image=loadImage(`/assets/characters/${hero.key}/${atlas}.png`);
    at(160,Math.min(0,p.y+p.velocity*extrapolation+950*extrapolation*extrapolation),()=>{
      if(p.lives===0){c.globalAlpha=.68;c.filter='drop-shadow(0 0 8px #00ffff) hue-rotate(155deg)';}
      const size=256*hero.scale;if(frame&&image.complete&&image.naturalWidth)c.drawImage(image,frame.x,frame.y,frame.w,frame.h,-size/2,-size*240/256,size,size);
    });
-   const pet=loadImage(`/assets/pets/${hero.petRest}.png`);at(56,0,()=>{if(pet.complete&&pet.naturalWidth)c.drawImage(pet,-42,-73,83,83);});
+   const pet=loadImage(`/assets/pets/${v2?hero.pet:hero.petRest}.png`);at(56,0,()=>{if(pet.complete&&pet.naturalWidth){if(v2){const reacting=(v2.animation instanceof StellaAnimation&&v2.animation.stellaSpell==='burst'&&gameTime-v2.animation.castAt<1000)||gameTime<v2.hurtUntil||(v2.animation.spell==='harmony'&&gameTime-v2.animation.castAt<650);const frame=hero.key==='stella'?(reacting?9+Math.floor(gameTime/125)%5:4+Math.floor(gameTime/100)%5):reacting?7+Math.floor(gameTime/125)%4:2+Math.floor(gameTime/100)%5;c.drawImage(pet,frame*128,0,128,128,-42,-73,83,83);}else c.drawImage(pet,-42,-73,83,83);}});
   }
  }
  requestAnimationFrame(draw);
- el('create-room').onclick=()=>void enter('rooms');el('join-room').onsubmit=e=>{e.preventDefault();void enter(`rooms/${el<HTMLInputElement>('room-code').value}/join`)};
+ el('create-room').onclick=()=>void enter('rooms', 'create');el('join-room').onsubmit=e=>{e.preventDefault();void enter(`rooms/${el<HTMLInputElement>('room-code').value}/join`, 'join')};
  el('online-difficulty-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-diff]');if(card&&!card.disabled&&card.dataset.onlineDiff)lobbyAction('difficulty',{difficulty:card.dataset.onlineDiff},next=>next.difficulty===card.dataset.onlineDiff);};
  el('online-hero-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-hero]');if(card&&!card.disabled)lobbyAction('hero',{hero:Number(card.dataset.onlineHero)},next=>next.members.find(member=>member.id===session?.id)?.hero===Number(card.dataset.onlineHero))};
  function checkPhoneOrientationForReady(): boolean {

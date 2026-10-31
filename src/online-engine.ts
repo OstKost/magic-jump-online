@@ -1,3 +1,4 @@
+import { actionRandom, chooseStellaSpell } from './animation-v2.ts';
 import { moveBody, collectBonus } from './terrain.ts';
 import { DIFFICULTIES, JUMP_VELOCITY, route, obstacleCollision, type DifficultyKey } from './rules.ts';
 
@@ -8,7 +9,7 @@ export interface OnlineBody {
 export interface OnlineItem {
   width?: number; height?: number; x: number; kind: string; obstacle: string; variant: number; passed: boolean; defeatedAt?: number;
 }
-export interface OnlineShot { y: number; x: number; distance: number }
+export interface OnlineShot { y: number; x: number; distance: number; burstAt?: number }
 
 /** A single player's simulation. No clock, transport or remote state dependencies. */
 export class OnlineEngine {
@@ -20,9 +21,11 @@ export class OnlineEngine {
   readonly body: OnlineBody;
 
   readonly world: number;
+  readonly player: number;
+  readonly hero: number;
   readonly difficulty: DifficultyKey | undefined;
-  constructor(seed: number, player: number, world: number, difficulty: DifficultyKey | undefined, score = 0) {
-    this.world=world;this.difficulty=difficulty;
+  constructor(seed: number, player: number, world: number, difficulty: DifficultyKey | undefined, score = 0, hero = player) {
+    this.player=player;this.hero=hero;this.world=world;this.difficulty=difficulty;
     this.plan = route(seed, player, difficulty);
     this.body = { lives: (difficulty?DIFFICULTIES[difficulty].lives:3), score, roundScore: 0, y: 0, velocity: 0, duck: false, held: false, immune: 0, readyAt: 0, readyDashAt: 0, dashUntil: 0, jumps: 0 };
   }
@@ -39,7 +42,7 @@ export class OnlineEngine {
     }
     if (kind === 'cast' && this.tick * 20 >= p.readyAt) {
       p.readyAt = this.tick * 20 + 500;
-      this.projectiles.push({ x: 160, distance: 0, y: p.y - 30 });
+      this.projectiles.push({ x: 160, distance: 0, y: p.y - 30, ...(this.hero===1&&chooseStellaSpell(actionRandom(p.readyAt+this.player*7919))==='burst'?{burstAt:this.tick*20+360}:{}) });
     }
     if (kind === 'dash' && this.tick * 20 >= p.readyDashAt) {
       p.readyDashAt = this.tick * 20 + 2000;
@@ -65,6 +68,12 @@ export class OnlineEngine {
     if(motion==='fall' && p.lives>0 && elapsed>=p.immune && elapsed >= p.dashUntil){p.lives--;p.immune=elapsed+1000;}
     p.duck=!!p.grounded&&p.held;
     this.projectiles = this.projectiles.filter(shot => {
+      if(shot.burstAt!==undefined){
+        if(elapsed<shot.burstAt)return true;
+        const target=this.items.filter(o=>o.kind==='enemy'&&!o.passed&&o.x>=0&&o.x<=1150).sort((a,b)=>Math.abs(a.x-160)-Math.abs(b.x-160))[0];
+        if(target){target.passed=true;target.defeatedAt=elapsed;award(25);}
+        return false;
+      }
       const from = shot.x;
       const travel = Math.min(14, 650 - shot.distance);
       shot.x += travel; shot.distance += travel;
@@ -78,7 +87,10 @@ export class OnlineEngine {
       if (!o.passed && (Math.abs(o.x - 160) < (o.kind === 'bonus' ? 30 : 28) || Math.abs(o.x - dashX) < (o.kind === 'bonus' ? 32 : 30))) {
         if ((o.kind === 'obstacle' || o.kind === 'enemy') && obstacleCollision(p.y, p.duck, o.obstacle as 'ground' | 'overhead' | 'none')) {
           o.passed = true;
-          if (elapsed < p.dashUntil) {
+          if (o.kind === 'enemy' && p.duck) {
+            o.defeatedAt = elapsed;
+            award(25);
+          } else if (elapsed < p.dashUntil) {
             award(15);
           } else if (p.lives > 0 && elapsed >= p.immune) {
             p.lives--; p.immune = elapsed + 1000;

@@ -462,7 +462,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		case "hero":
-			if room.Phase == "lobby" && msg.Hero >= 0 && msg.Hero < 6 {
+			if room.Phase == "lobby" && msg.Hero >= 0 && msg.Hero < 7 {
 				if member.Hero != msg.Hero {
 					member.Hero = msg.Hero
 					member.Ready = false
@@ -687,7 +687,7 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 	}
 	used := map[int]bool{}
 	for _, h := range req.Heroes {
-		if h < 0 || h > 5 || used[h] {
+		if h < 0 || h > 6 || used[h] {
 			apiError(w, 400, "invalid_heroes", "Недопустимые герои", false)
 			return
 		}

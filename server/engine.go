@@ -49,6 +49,7 @@ type Object struct {
 	Passed bool    `json:"passed"`
 }
 type Projectile struct {
+	BurstAt  int     `json:"burstAt,omitempty"`
 	X        float64 `json:"x"`
 	Distance float64 `json:"distance"`
 	Player   int     `json:"player"`
@@ -232,7 +233,12 @@ func (e *Engine) input(a Action) {
 	case "cast":
 		if e.Tick*stepMS >= p.ReadyAt {
 			p.ReadyAt = e.Tick*stepMS + 500
-			e.Projectiles = append(e.Projectiles, Projectile{X: 160, Player: a.Player, Y: p.Y - 30})
+			shot := Projectile{X: 160, Player: a.Player, Y: p.Y - 30}
+			rng := uint32(p.ReadyAt+a.Player*7919)*1664525 + 1013904223
+			if p.Hero == 1 && float64(rng)/4294967296 < .1 {
+				shot.BurstAt = e.Tick*stepMS + 360
+			}
+			e.Projectiles = append(e.Projectiles, shot)
 		}
 	case "jump":
 		if !p.Held && p.Y <= 0 {
@@ -333,6 +339,29 @@ func (e *Engine) step() {
 	}
 	keptShots := []Projectile{}
 	for _, shot := range e.Projectiles {
+		if shot.BurstAt > elapsed {
+			keptShots = append(keptShots, shot)
+			continue
+		}
+		if shot.BurstAt > 0 {
+			target := -1
+			for i, o := range e.Items {
+				if o.Kind == "enemy" && !o.Passed && o.Player == shot.Player && o.X >= 0 && o.X <= 1150 && (target < 0 || math.Abs(o.X-160) < math.Abs(e.Items[target].X-160)) {
+					target = i
+				}
+			}
+			if target >= 0 {
+				e.Items[target].Passed = true
+				e.Items[target].DefeatedAt = elapsed
+				points := 25
+				if e.Players[shot.Player].Lives == 0 {
+					points = 20
+				}
+				e.Players[shot.Player].Score += points
+				e.Players[shot.Player].RoundScore += points
+			}
+			continue
+		}
 		from := shot.X
 		travel := math.Min(14, 650-shot.Distance)
 		shot.X += travel
@@ -381,7 +410,10 @@ func (e *Engine) step() {
 		if !o.Passed && (math.Abs(o.X-160) < threshold || math.Abs(o.X-dashX) < threshold+2) {
 			if (o.Kind == "obstacle" || o.Kind == "enemy") && collision(*p, o.Obstacle) {
 				o.Passed = true
-				if elapsed < p.DashUntil {
+				if o.Kind == "enemy" && p.Duck {
+					o.DefeatedAt = elapsed
+					award(25)
+				} else if elapsed < p.DashUntil {
 					award(15)
 				} else if p.Lives > 0 && elapsed >= p.Immune && elapsed >= p.DashUntil {
 					p.Lives--

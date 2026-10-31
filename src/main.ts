@@ -1,3 +1,4 @@
+import { AnimationV2, StellaAnimation, actionRandom, ELEMENTS } from './animation-v2';
 import { OBSTACLE_ANIMATIONS, obstacleAnimationKey, obstacleFrame, obstaclePhase } from './obstacle-animations';
 import { drawTerrain } from './terrain-art';
 import { moveBody, collectBonus } from './terrain';
@@ -11,7 +12,7 @@ import { api, mountNetwork, nameForms, type Action, type Attempt } from './netwo
 import './style.css';
 import './game-window.css';
 import { actionIcon, castButtonContent, dashButtonContent } from './game-controls';
-import { CHARACTERS, portraitMarkup, petMarkup } from './characters';
+import { CHARACTERS, availableCharacters, portraitMarkup, petMarkup } from './characters';
 import { Journey } from './journey';
 import { Pet } from './pets';
 import { ElementMagic } from './element-magic';
@@ -24,6 +25,7 @@ import { mountRankingRecovery, rankingDeliveryMessage, queueJourneyFinish, Ranki
 import { MenuFireflies } from './menu-fireflies';
 import { splashShareMarkup, mountSplashShareWidget } from './elemental-qr';
 import { GAME_VERSION, GAME_VERSION_LABEL } from './version.ts';
+import { setButtonProgress } from './button-progress';
 
 const journey = new Journey();
 const heroFor = (row: number) => CHARACTERS[journey.selected[row]];
@@ -129,6 +131,7 @@ app.innerHTML = `
   <div class="selection-heading"><span class="eyebrow" id="choosing-player">ИГРОК 1</span><h2>Выберите персонажа</h2><p id="selection-hint">Ваш верный спутник отправится вместе с вами.</p></div>
   <div id="secret-banner" class="secret-banner" hidden>✨ Секрет открыт: Кай и Лея присоединились к магам!</div>
   <div class="character-grid" id="character-grid"></div>
+  <div id="hero-details" class="hero-details" aria-live="polite"></div>
   <footer class="selection-footer"><div id="party-preview" class="party-preview"></div><button id="confirm-character" class="primary">Подтвердить →</button></footer>
 </section>
 <section id="result" class="screen result-screen" hidden><div class="result-content"><span class="eyebrow" id="result-eyebrow"></span><h2 id="result-title"></h2><p id="result-description"></p><div id="result-party" class="result-party"></div><div id="result-scores" class="result-scores"></div><div id="result-ranking" class="result-ranking"></div><button id="result-next" class="primary"></button><button id="result-menu" class="secondary">В главное меню</button></div></section>
@@ -278,7 +281,7 @@ ${[0,1].map(row=>`<div class="player-window player-window-${row}" data-player-wi
             <span class="move-glyph">⬇️</span>
             <div>
               <strong>Присед (удерживайте)</strong>
-              <p>Когда впереди деревянная арка или мостик — <em>зажмите и держите</em> кнопку приседа, пока не пробежите под препятствием.</p>
+              <p>Когда впереди деревянная арка или мостик — <em>зажмите и держите</em> кнопку приседа, пока не пробежите под препятствием. Подкат также сбивает врагов и приносит 25 очков.</p>
             </div>
           </div>
         </div>
@@ -670,15 +673,39 @@ function unlockSecret(silent = false) {
   renderSelection();
 }
 
+let assetLoadProgress = 0;
+
+function updateCharacterConfirmButton() {
+  const confirm = document.querySelector<HTMLButtonElement>('#confirm-character');
+  if (!confirm) return;
+  const isReady = Boolean(adventure);
+  const row = journey.choosing;
+
+  if (!isReady) {
+    const pct = Math.max(0, Math.min(100, Math.round(assetLoadProgress * 100)));
+    setButtonProgress(confirm, {
+      loading: true,
+      determinate: true,
+      progress: assetLoadProgress,
+      loadingText: `Загрузка персонажей… ${pct}%`,
+    });
+  } else {
+    setButtonProgress(confirm, {
+      loading: false,
+      readyText: row === 0 ? 'Выбрать для игрока 1 →' : 'Отправиться вместе →',
+    });
+  }
+}
+
 function renderSelection() {
   const row=journey.choosing;
   document.querySelector('#choosing-player')!.textContent=`ИГРОК ${row+1} · ${row===0?'СЛЕВА':'СПРАВА'}`;
   document.querySelector('#selection-step')!.textContent=`0${row+1} / 0${journey.count}`;
-  const availableHeroes = secretUnlocked ? CHARACTERS : CHARACTERS.slice(0, 4);
+  const availableHeroes = availableCharacters(secretUnlocked);
   const charGrid = document.querySelector<HTMLElement>('#character-grid')!;
   charGrid.dataset.count = String(availableHeroes.length);
   document.querySelector('#character-select')?.classList.toggle('has-secrets', secretUnlocked);
-  charGrid.innerHTML=availableHeroes.map((hero,i)=>`<button class="character-card ${journey.selected[row]===i?'selected':''}" data-character="${i}" style="--hero-color:${hero.color}" aria-pressed="${journey.selected[row]===i}" ${row===1&&journey.selected[0]===i?'disabled':''}>${portraitMarkup(hero)}<span class="character-name">${hero.name}</span><span class="character-element">${hero.symbol} · ${hero.element}</span>${petMarkup(hero)}<small>${row===1&&journey.selected[0]===i?'Выбран игроком 1':hero.petName}</small></button>`).join('');
+  charGrid.innerHTML=availableHeroes.map(({hero,index:i})=>`<button class="character-card ${journey.selected[row]===i?'selected':''}" data-character="${i}" style="--hero-color:${hero.color}" aria-pressed="${journey.selected[row]===i}" ${row===1&&journey.selected[0]===i?'disabled':''}>${portraitMarkup(hero)}<span class="character-name">${hero.name}</span><span class="character-element">${hero.symbol} · ${hero.element}</span>${petMarkup(hero)}<small>${row===1&&journey.selected[0]===i?'Выбран игроком 1':hero.petName}</small></button>`).join('');
   document.querySelectorAll<HTMLElement>('[data-character]').forEach(button=>button.addEventListener('click',()=>{
     const idx = Number(button.dataset.character);
     if (idx === 1 && !secretUnlocked) {
@@ -694,7 +721,8 @@ function renderSelection() {
     if(journey.choose(idx))renderSelection();
   }));
   document.querySelector('#party-preview')!.innerHTML=journey.selected.map((_,i)=>`<span class="party-slot ${i===row?'current':''}"><small>ИГРОК ${i+1}</small><b>${i<=row?heroFor(i).name:'Ожидает выбора'}</b></span>`).join('');
-  const confirm=document.querySelector<HTMLButtonElement>('#confirm-character')!;confirm.disabled=!adventure;confirm.textContent=adventure?(row===0?'Выбрать для игрока 1 →':'Отправиться вместе →'):'Загрузка персонажей…';
+  document.querySelector('#hero-details')!.textContent=heroFor(row).key==='sensei'?'Сенсей · Хранитель четырёх стихий. Прыжок: воздух или огонь. Подкат: вода или земля. Атака: случайная стихия, 10% — Гармония. Спутник: Хатико.':`${heroFor(row).name} · ${heroFor(row).element}. Спутник: ${heroFor(row).petName}. Прыжок, двойной прыжок, подкат и дальняя магия.`;
+  updateCharacterConfirmButton();
 }
 document.querySelector('#selection-back')!.addEventListener('click',()=>{if(journey.choosing===1){journey.choosing=0;renderSelection();}else showScreen('difficulty-select');});
 document.querySelector('#confirm-character')!.addEventListener('click',()=>{if(!adventure)return;if(journey.confirm()){showScreen('play-screen');adventure.prepareLevel(true);}else renderSelection();});
@@ -738,8 +766,24 @@ async function startLocal(count:number, difficulty: DifficultyKey = selectedDiff
   subtitle.textContent = 'Начинаем приключение…';
   subtitle.classList.add('request-loading');
   selectedDifficulty = difficulty;
+  const activeCard = screen.querySelector<HTMLButtonElement>(`[data-difficulty="${difficulty}"]`);
+  const activeCardBtn = activeCard?.querySelector<HTMLElement>('.difficulty-card-btn');
+  const originalCardBtnText = activeCardBtn?.textContent ?? '';
+  if (activeCardBtn) {
+    setButtonProgress(activeCardBtn, {
+      loading: true,
+      determinate: false,
+      loadingText: 'Начинаем приключение…',
+    });
+  }
   try{attempt=await api<Attempt>('attempts',{count, difficulty});}catch{attempt=undefined;}finally{
     startingLocal=false;
+    if (activeCardBtn) {
+      setButtonProgress(activeCardBtn, {
+        loading: false,
+        readyText: originalCardBtnText,
+      });
+    }
     buttons.forEach(button => { button.disabled = false; });
     screen.setAttribute('aria-busy', 'false');
     subtitle.textContent = caption;
@@ -770,6 +814,7 @@ updateVibrationUI();
 const overlay = document.querySelector<HTMLDivElement>('#overlay')!;
 interface DashState { active: boolean; startedAt: number; duration: number; startX: number; targetX: number }
 interface Runner {
+  v2?: AnimationV2;
   grounded?: boolean;
   fallUntil?: number;
   dashActive?: boolean;
@@ -790,7 +835,7 @@ interface Item { animation?: { key: string; phase: number }; height?: number; wi
 class Adventure extends Phaser.Scene {
   get world() { return worldOrder(this.seed)[this.level]; }
   level=0; players: Player[]=[newPlayer(),newPlayer()]; runners: Runner[]=[]; items: Item[]=[];
-  shots: { x:number; y:number; distance:number; row:number; icon:Phaser.GameObjects.Image }[]=[];
+  shots: { x:number; y:number; distance:number; row:number; icon:Phaser.GameObjects.Image; burstAt?:number }[]=[];
   readyAt:number[]=[];
   readyDashAt:number[]=[];
   levelClearing = false;
@@ -802,14 +847,28 @@ class Adventure extends Phaser.Scene {
   accumulator=0; elapsed=0; next=0; plan: (Spawn & {row:number})[]=[]; playing=false; paused=false; started=false; seed=Date.now();
   exitController?: ExitConfirmationController;
   preload() {
+    this.load.on('progress', (value: number) => {
+      assetLoadProgress = Math.max(assetLoadProgress, value);
+      updateCharacterConfirmButton();
+    });
+    this.load.on('complete', () => {
+      assetLoadProgress = 1;
+      updateCharacterConfirmButton();
+    });
     for (const world of [3,4]) {
       this.load.image(`bonus-${world}`, `assets/bonuses/world-${world}.png`);
     }
     for(const [key, animation] of Object.entries(OBSTACLE_ANIMATIONS))this.load.spritesheet(`obstacle-anim-${key}`,animation.path,{frameWidth:animation.width,frameHeight:animation.height});
     this.load.image('level-1-floor', 'art/level-1-floor.png');
     for (let level = 0; level < WORLDS.length; level++) this.load.image(`panorama-${level}`, `art/level-${level + 1}-bg.png`);
+    for(const element of [...ELEMENTS,'harmony'])this.load.spritesheet(`spell-sensei-${element}`,`assets/spells/sensei-${element}.png`,{frameWidth:128,frameHeight:96});
+    for(const spell of ['projectile','wave','burst'])this.load.spritesheet(`spell-stella-${spell}`,`assets/spells/stella-${spell}.png`,{frameWidth:128,frameHeight:96});
+    this.load.spritesheet('stella-cat','assets/pets/stella-cat.png',{frameWidth:128,frameHeight:128});
+    this.load.image('stella-cat-rest','assets/pets/stella-cat-rest.png');
+    this.load.spritesheet('sensei-dog','assets/pets/sensei-dog.png',{frameWidth:128,frameHeight:128});
+    this.load.image('sensei-dog-rest','assets/pets/sensei-dog-rest.png');
     for(const hero of CHARACTERS)this.load.spritesheet(`spell-${hero.key}`,`assets/spells/${hero.key}.png`,{frameWidth:128,frameHeight:96});
-    for (const hero of CHARACTERS) { const atlas=hero.clean?'atlas-elemental':'atlas';this.load.atlas(hero.key,`assets/characters/${hero.key}/${atlas}.png`,`assets/characters/${hero.key}/${atlas}.json`); }
+    for (const hero of CHARACTERS) { const atlas=hero.key==='stella'?'atlas-v2':hero.clean?'atlas-elemental':'atlas';this.load.atlas(hero.key,`assets/characters/${hero.key}/${atlas}.png`,`assets/characters/${hero.key}/${atlas}.json`); }
     for(const key of ['eagle','fox','eagle-rest','eagle-fly','fox-rest','fox-run','black-cat-rest','ginger-cat-rest','air-cat','earth-cat','falcon','falcon-rest','falcon-fly','red-panda','red-panda-rest','red-panda-run'])this.load.image(key,`assets/pets/${key}.png`);
     for (const key of ['black-cat','ginger-cat']) this.load.spritesheet(key,`assets/pets/${key}.png`,{frameWidth:128,frameHeight:128});
 
@@ -843,7 +902,10 @@ class Adventure extends Phaser.Scene {
       this.anims.create({key:`${key}-run`,frames:this.anims.generateFrameNumbers(key,{start:0,end:3}),frameRate:10,repeat:-1});
     }
     this.drawWorld();
-    adventure=this;(window as any).adventure=this;this.scene.setVisible(false);renderSelection();
+    adventure=this;(window as any).adventure=this;this.scene.setVisible(false);
+    assetLoadProgress = 1;
+    updateCharacterConfirmButton();
+    renderSelection();
     document.querySelector('#result-menu')!.addEventListener('click',()=>{showScreen('home');});
     this.exitController = new ExitConfirmationController({
       onPauseGame: () => {
@@ -957,7 +1019,7 @@ class Adventure extends Phaser.Scene {
       const pet=new Pet(this,row,floor,hero.pet);
       pet.setArenaScale(this.elementScale);
       const magic=new ElementMagic(this,hero.key);
-      this.runners.push({duckInputs:new Set(),ducking:false,y:0,velocity:0,jumps:0,sprite,pet,magic,dash:{active:false,startedAt:0,duration:DASH_DURATION_MS,startX:160,targetX:160+DASH_DISTANCE_PX}});
+      this.runners.push({v2:hero.key==='stella'?new StellaAnimation():hero.key==='sensei'?new AnimationV2():undefined,duckInputs:new Set(),ducking:false,y:0,velocity:0,jumps:0,sprite,pet,magic,dash:{active:false,startedAt:0,duration:DASH_DURATION_MS,startX:160,targetX:160+DASH_DISTANCE_PX}});
     }
   }
   prepareLevel(reset=false) {
@@ -1022,7 +1084,7 @@ class Adventure extends Phaser.Scene {
     (document.querySelector('#pause') as HTMLButtonElement).disabled=false;document.querySelector('#pause')!.textContent='Ⅱ';
     this.orientationPaused=false;this.checkOrientation();
   }
-  jump(row:number){if(this.exitController?.isOpen)return;if(this.awaitingReady){this.markReady(row);return;}const r=this.runners[row];if(!this.playing||this.paused||r.duckInputs.size>0)return;if(r.y>0)return;const res=jumpVelocity(r.grounded?0:r.y,r.jumps);if(!res)return;r.velocity=res.velocity;r.jumps=res.jumps;consumeCue(this.items,row,res.isDouble?'double':'jump',WORLDS[this.world].speed*this.difficultyConfig.speedMultiplier,this.elapsed);logs[this.level].push({tick:Math.min(Math.round(this.elapsed/20), this.difficultyConfig.levelSeconds*50-1),player:row,kind:'jump',pressed:true});if(res.isDouble)r.magic.burst(r.y);if(vibration)navigator.vibrate?.(15);gameAudio.effect('jump',CHARACTERS[journey.selected[row]].key);}
+  jump(row:number){if(this.exitController?.isOpen)return;if(this.awaitingReady){this.markReady(row);return;}const r=this.runners[row];if(!this.playing||this.paused||r.duckInputs.size>0)return;if(r.y>0)return;const res=jumpVelocity(r.grounded?0:r.y,r.jumps);if(!res)return;r.v2?.beginJump(res.isDouble);r.velocity=res.velocity;r.jumps=res.jumps;consumeCue(this.items,row,res.isDouble?'double':'jump',WORLDS[this.world].speed*this.difficultyConfig.speedMultiplier,this.elapsed);logs[this.level].push({tick:Math.min(Math.round(this.elapsed/20), this.difficultyConfig.levelSeconds*50-1),player:row,kind:'jump',pressed:true});if(res.isDouble)r.magic.burst(r.y);if(vibration)navigator.vibrate?.(15);gameAudio.effect('jump',CHARACTERS[journey.selected[row]].key);}
   duck(row:number,source:string,pressed:boolean){
     if(this.exitController?.isOpen)return;
     const r=this.runners[row];if(!r)return;
@@ -1034,8 +1096,14 @@ class Adventure extends Phaser.Scene {
   cast(row:number){
     if(!this.runners[row]||!this.playing||this.paused||this.exitController?.isOpen||this.elapsed<(this.readyAt[row]??0))return;
     this.readyAt[row]=this.elapsed+SPELL_COOLDOWN_MS;
-    this.shots.push({x:160,y:this.runners[row].y-30,distance:0,row,icon:this.add.image(160,this.ground(row)+(this.runners[row].y-30)*this.elementScale,`spell-${heroFor(row).key}`).setScale(this.elementScale*.7).setDepth(5)});
-    const shot=this.shots.at(-1)!;shot.icon.postFX?.addGlow(SPELLS[heroFor(row).key].color,2,0,false,.1,6);
+    const runner=this.runners[row], element=runner.v2?.cast(this.elapsed);
+    if(element==='harmony')runner.pet.react();
+    const stella=runner.v2 instanceof StellaAnimation?runner.v2:undefined;
+    if(stella){const rng=actionRandom(this.readyAt[row]+row*7919);stella.stellaSpell=rng()<.1?'burst':rng()<.5?'projectile':'wave';}
+    const spellKey=stella?`stella-${stella.stellaSpell}`:element?`sensei-${element}`:heroFor(row).key;
+    if(stella?.stellaSpell==='burst')runner.pet.react();
+    this.shots.push({x:runner.sprite.x,y:this.runners[row].y-30,distance:0,row,icon:this.add.image(runner.sprite.x,this.ground(row)+(this.runners[row].y-30)*this.elementScale,`spell-${spellKey}`).setScale(this.elementScale*.7).setDepth(5)});
+    const shot=this.shots.at(-1)!;if(stella?.stellaSpell==='burst'){shot.burstAt=this.elapsed+360;shot.icon.setVisible(false);}if(element==='harmony')shot.icon.setScale(this.elementScale*1.1);shot.icon.postFX?.addGlow(SPELLS[heroFor(row).key].color,2,0,false,.1,6);
     logs[this.level].push({tick:Math.min(Math.round(this.elapsed/20), this.difficultyConfig.levelSeconds*50-1),player:row,kind:'cast',pressed:true});gameAudio.effect('cast',CHARACTERS[journey.selected[row]].key);
   }
   dash(row:number){
@@ -1285,6 +1353,7 @@ class Adventure extends Phaser.Scene {
           );
         };
 
+        const initialSubmitText = submitBtn.textContent ?? 'Сохранить';
         form.onsubmit = async (e) => {
           e.preventDefault();
           const name = input.value.trim();
@@ -1293,6 +1362,11 @@ class Adventure extends Phaser.Scene {
           skipBtn.disabled = true;
           input.disabled = true;
           status.textContent = 'Сохраняем…';
+          setButtonProgress(submitBtn, {
+            loading: true,
+            determinate: false,
+            loadingText: 'Сохраняем…',
+          });
           try {
             if (attempt && last && !lost) {
               queueJourneyFinish(attempt.id, { token: attempt.token, heroes: [...journey.selected], logs: structuredClone(logs) });
@@ -1301,9 +1375,17 @@ class Adventure extends Phaser.Scene {
             const res = await flow.saveCurrentPlayer(name, api);
             status.textContent = rankingDeliveryMessage(res);
             if (!res.ok) throw new Error(res.error ?? 'Не удалось сохранить');
+            setButtonProgress(submitBtn, {
+              loading: false,
+              readyText: 'Сохранено ✓',
+            });
             renderRankingStep();
           } catch (err) {
             status.textContent = String(err);
+            setButtonProgress(submitBtn, {
+              loading: false,
+              readyText: initialSubmitText,
+            });
             submitBtn.disabled = false;
             skipBtn.disabled = false;
             input.disabled = false;
@@ -1350,6 +1432,7 @@ class Adventure extends Phaser.Scene {
         }else{
           r.sprite.setScale(scale*(1+Math.sin(this.idleTime*2+row)*.012),scale);
         }
+        if(r.v2){r.sprite.stop();r.sprite.setFrame(r.v2.frame(this.idleTime*1000,{hurt:false,airborne:false,double:false,duck:false,velocity:0,idle:true}));}
         r.pet.idle(dt,this.ground(row));
       });
       if(this.readyCountdown>0&&!window.matchMedia('(orientation: portrait)').matches){this.readyCountdown=Math.max(0,this.readyCountdown-dt);
@@ -1403,7 +1486,7 @@ class Adventure extends Phaser.Scene {
         if(!r.dash.active){hit(this.players[i],this.elapsed);gameAudio.effect('fall');}
       }else if(motion==='land'&&gameAudio.sound)gameAudio.tone(100,.06);
       const wasDucking=r.ducking;r.ducking=!!r.grounded&&r.duckInputs.size>0;
-      if(r.ducking&&!wasDucking){consumeCue(this.items,i,'duck',currentSpeed,this.elapsed);gameAudio.effect('duck',heroFor(i).key);}
+      if(r.ducking&&!wasDucking){r.v2?.beginSlide();consumeCue(this.items,i,'duck',currentSpeed,this.elapsed);gameAudio.effect('duck',heroFor(i).key);}
       const hero=heroFor(i).key;
       r.sprite.anims.timeScale=1;
       if(this.elapsed < this.players[i].invulnerable && this.elapsed > this.players[i].invulnerable-650) {
@@ -1418,6 +1501,11 @@ class Adventure extends Phaser.Scene {
       else if(r.ducking){
         if(r.sprite.anims.currentAnim?.key!==`${hero}-duck`||!String(r.sprite.frame.name).startsWith('duck-'))r.sprite.play(`${hero}-duck`);
       } else {r.sprite.anims.timeScale=currentSpeed/270;r.sprite.play(`${hero}-run`,true);}
+      if(r.v2){
+        const hurt=this.elapsed<this.players[i].invulnerable&&this.elapsed>this.players[i].invulnerable-650;
+        r.sprite.stop();r.sprite.setFrame(r.v2.frame(this.elapsed,{hurt,airborne:!r.grounded&&r.y!==0,double:r.jumps>=2,duck:r.ducking,velocity:r.velocity}));
+        if(hurt)r.pet.react();
+      }
       r.sprite.y=this.ground(i)+r.y*this.elementScale;
       const hurt=String(r.sprite.frame.name).startsWith('hit-');
       r.magic.update(dt,r.sprite.x,r.sprite.y,this.ground(i),hurt?'none':!r.grounded&&r.y!==0?'jump':r.ducking?'duck':'none',currentSpeed,r.sprite,this.elementScale);
@@ -1435,6 +1523,12 @@ class Adventure extends Phaser.Scene {
       }
       r.sprite.alpha=isGhost?.68:this.elapsed<this.players[i].invulnerable?(Math.floor(this.elapsed/100)%2?.4:1):1;});
     for(const shot of this.shots){
+      if(shot.burstAt!==undefined){
+        if(this.elapsed<shot.burstAt)continue;
+        const target=this.items.filter(i=>i.kind==='enemy'&&!i.passed&&i.row===shot.row&&i.x>=0&&i.x<=1150).sort((a,b)=>Math.abs(a.x-this.runners[shot.row].sprite.x)-Math.abs(b.x-this.runners[shot.row].sprite.x))[0];
+        if(target){target.passed=true;target.defeatedAt=this.elapsed;award(this.players[shot.row],ENEMY_REWARD);const explosion=this.add.image(target.x,this.ground(shot.row)-45*this.elementScale,'spell-stella-burst',0).setScale(1.8*this.elementScale).setDepth(6);this.tweens.add({targets:explosion,alpha:0,scaleX:2.4*this.elementScale,scaleY:2.4*this.elementScale,duration:500,onComplete:()=>explosion.destroy()});}
+        shot.distance=SPELL_RANGE;continue;
+      }
       const from=shot.x,travel=Math.min(SPELL_SPEED*dt,SPELL_RANGE-shot.distance);
       shot.x+=travel;shot.distance+=travel;
       const candidates=this.items.filter(i=>i.kind==='enemy'&&!i.passed&&Math.abs(shot.y+35)<65).map(item=>({x:item.x-currentSpeed*dt,row:item.row,defeated:false,item}));
@@ -1490,7 +1584,11 @@ class Adventure extends Phaser.Scene {
       if(!item.passed&&collidesNear){
         if((item.kind==='obstacle'||item.kind==='enemy')&&obstacleCollision(r.y,r.ducking,item.obstacle)){
           item.passed=true;
-          if(r.dash.active){
+          if(item.kind==='enemy'&&r.ducking){
+            item.defeatedAt=this.elapsed;
+            award(p,ENEMY_REWARD);
+            gameAudio.effect('duck',heroFor(item.row).key);
+          }else if(r.dash.active){
             award(p,15);
             gameAudio.effect('dash',heroFor(item.row).key);
             for(let n=0;n<5;n++){

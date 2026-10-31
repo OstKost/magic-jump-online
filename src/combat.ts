@@ -18,6 +18,7 @@ export const ENEMIES = [
 ] as const;
 
 export const SPELLS = {
+  sensei: { name: 'Магия четырёх стихий · 10% Гармония', color: 0xd5be80 },
   sofia: { name: 'Водяная сфера', color: 0x71cce8 },
   stella: { name: 'Огненный шар', color: 0xefaa76 },
   air: { name: 'Порыв ветра', color: 0xa2e0da },

@@ -1802,3 +1802,179 @@
 #online-reconnect { position: absolute; z-index: 20; top: 0; right: 8px; max-width: 78%; margin: 4px; padding: 8px 12px; border: 1px solid #e4c58b; border-radius: 8px; background: #102330f5; color: #fff0cc; font: 13px/1.4 system-ui,sans-serif; pointer-events: none; }
 
 #online-reconnect { left: 8px; right: 90px; max-width: none; }
+
+/* ==========================================================================
+   In-Button Progress Bar System (Determinate & Indeterminate)
+   ========================================================================== */
+.btn-progress {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.btn-progress > * {
+  position: relative;
+  z-index: 2;
+}
+
+button.btn-progress:disabled,
+button[data-loading="true"]:disabled,
+.difficulty-card.btn-progress:disabled {
+  opacity: 1 !important;
+  cursor: wait !important;
+  pointer-events: none;
+}
+
+.btn-progress-determinate {
+  --btn-progress: 0%;
+  background: #142634 !important;
+  color: #f6e9d3 !important;
+  border-color: #dfc18b88 !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  text-shadow: 0 1px 3px rgba(10, 23, 35, 0.95), 0 0 8px rgba(16, 35, 49, 0.85);
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+
+.btn-progress-determinate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: var(--btn-progress, 0%);
+  background: linear-gradient(90deg, rgba(207, 168, 104, 0.35) 0%, rgba(242, 214, 165, 0.65) 100%);
+  box-shadow: 2px 0 12px rgba(242, 214, 165, 0.6);
+  transition: width 0.18s cubic-bezier(0.2, 0.8, 0.4, 1);
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.btn-progress-determinate::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--btn-progress, 0%);
+  height: 4px;
+  background: linear-gradient(90deg, #cfa868, #fff2d5);
+  box-shadow: 0 0 10px #f6e9d3, 0 0 4px #cfa868;
+  transition: width 0.18s cubic-bezier(0.2, 0.8, 0.4, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.btn-progress-indeterminate {
+  background: #142634 !important;
+  color: #f6e9d3 !important;
+  border-color: #dfc18b88 !important;
+  text-shadow: 0 1px 3px rgba(10, 23, 35, 0.95);
+}
+
+.btn-progress-indeterminate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(207, 168, 104, 0.18) 25%,
+    rgba(242, 214, 165, 0.55) 50%,
+    rgba(207, 168, 104, 0.18) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: btn-progress-slide 1.4s infinite linear;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.btn-progress-indeterminate::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #cfa868 25%,
+    #fff2d5 50%,
+    #cfa868 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: btn-progress-slide 1.4s infinite linear;
+  box-shadow: 0 0 8px rgba(246, 233, 211, 0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes btn-progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-progress-indeterminate::before,
+  .btn-progress-indeterminate::after {
+    animation-duration: 4s;
+  }
+  .btn-progress-determinate::before,
+  .btn-progress-determinate::after {
+    transition-duration: 0.05s;
+  }
+}
+
+
+/* Viewport-sized screens: content determines wrapping, never the page width. */
+.mobile-app { min-height: 0; }
+.screen { overflow-x: hidden; }
+.screen input, .screen select { max-width: 100%; min-width: 0; }
+.ranking-flow-actions > button { width: auto; min-width: 0; min-height: 44px; }
+.ranking-flow-actions > .primary { flex: 2 1 0; }
+.ranking-flow-actions > .secondary { flex: 1 1 0; }
+.ranking-flow-form input { font-size: 16px; }
+.ranking-flow-header { flex-wrap: wrap; gap: 8px; }
+.ranking-row > *, .score-card-names { min-width: 0; overflow-wrap: anywhere; }
+#ranking { isolation: isolate; background-color: #0b1823; background-attachment: local; }
+#ranking .ranking-content { min-height: 0; }
+@media (max-width: 600px), (max-height: 600px) {
+  #character-select { padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); gap: 8px; }
+  #character-select .selection-heading { margin: 0; }
+  #character-select .selection-heading h2 { font-size: 24px; margin: 4px 0; }
+  #character-select .selection-heading p { display: none; }
+  #character-select .character-grid { width: 100%; min-height: 0; gap: 8px; }
+  #character-select .character-card { padding: 6px 4px; gap: 3px; min-width: 0; }
+  #character-select .hero-portrait { width: clamp(40px, 8dvh, 64px); height: clamp(40px, 8dvh, 64px); }
+  #character-select .character-card .companion { width: 30px; height: 30px; }
+  #character-select .character-name { font-size: 17px; }
+  #character-select .character-element { font-size: 8px; letter-spacing: 0; }
+  #character-select .selection-footer { margin-top: auto; gap: 8px; flex-shrink: 0; }
+  #character-select .selection-footer .primary { min-height: 44px; padding: 10px; font-size: 15px; }
+  #character-select .secret-banner { margin: 0; padding: 4px; font-size: 11px; }
+  #result.result-screen { padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom)); background-size: cover; }
+  #result.result-screen::before { background: #102330ed; position: fixed; }
+  #result .result-content { width: 100%; min-width: 0; margin: auto; }
+  #result .result-content h2 { font-size: 28px; margin: 6px 0; }
+  #result .result-content > p { font-size: 12px; margin-bottom: 8px; }
+  #result .result-party { margin: 6px 0 12px; }
+  #result .result-party .hero-portrait { width: 48px; height: 48px; }
+  #result .result-party .companion { width: 36px; height: 36px; }
+  #result .result-scores { margin: 6px 0; gap: 24px; }
+  #result .result-scores b { font-size: 28px; }
+  #result .result-ranking { margin: 8px 0; }
+  #result .ranking-flow-card { padding: 10px; }
+  #result .result-content > button { min-height: 44px; padding: 10px; font-size: 16px; }
+  .panel-top .screen-label { letter-spacing: 1px; font-size: 9px; }
+  .ranking-tab { min-width: 0; padding-inline: 6px; }
+}
+
+/* Flexible roster keeps the immediately available Sensei within reach. */
+#character-select .character-grid { grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); max-width:1040px; }
+#character-select .hero-details { max-width:850px;margin:12px auto 0;padding:10px 16px;border:1px solid #d5be8044;border-radius:12px;background:#102c36c9;color:#eddfbe;font-size:13px;line-height:1.5; }
+#character-select .character-card:focus-visible { outline:3px solid #fff0bc;outline-offset:4px; }
+#character-select .character-card[data-character="6"] { background:linear-gradient(150deg,#274d4b,#162b37); }
+@media(orientation:portrait){#character-select .character-grid {grid-template-columns:repeat(3,minmax(0,1fr));}#character-select .hero-details{font-size:11px;padding:8px 10px;margin-top:8px;}}

@@ -130,3 +130,19 @@ ImageGen sources and prompts are retained outside the public bundle in `pics/obs
 All 35 atlas entries now use retained ImageGen sources, including new ready poses for all ten enemies. Three original defeat frames remain unchanged. The root arch is a complete independent asset; temporary old-enemy and wooden-arch substitutions have been removed. Sakura/lantern, pine/crane, candy tree/sweet, and antenna/drone sources have been revised for higher hanging details.
 
 Rebuild the current set with `python scripts/prepare_obstacle_animations.py`; the old `--existing-enemies` flag is no longer supported. New sources use 2×2 pose grids described by sibling `*.layout.json`; legacy sources default to 4×2. The common four-pose forward/backward playback, padded cell dimensions and origins are preserved. Original attempts remain as versioned source PNGs/prompts. Current status, checks and further real-device review are recorded in [the iteration document](../../docs/obstacle-animation-next-iteration.md).
+
+## Sensei — animation and movement v2
+
+Source: `concept/chars-2/Sensei-sprite.png`; character description: `concept/chars-2/sensei-desc.md`. Rebuild with `python3 scripts/prepare_sensei.py` (Pillow, NumPy). No generation prompt: supplied user artwork is sliced directly, with neutral checkerboard removal. The script retains authored crop coordinates for reproducibility.
+
+`characters/sensei/atlas.png/json`: 73 padded 256 × 256 frames, support (128,240), same atlas contract as the existing heroes. Four elemental idle clips each have four breathing phases derived from one supplied pose; these are transformed phases rather than newly drawn poses. Eight run poses, elemental jump/flip and slide clips, four normal casts, Harmony cast and five fall poses. Compatibility aliases support existing consumers. `src/animation-v2.ts` keeps elemental choices across an action; a double jump retains its first jump's element. Normal attacks select one of four elements; Harmony has a 10% chance and shares existing combat damage/reward rules.
+
+`spells/sensei-{fire,water,air,earth,harmony}.png`: four phases in 128 × 96 cells. `pets/sensei-dog.png`: eleven 128 × 128 frames (two sitting, five moving, four rearing). Reaction accompanies damage and Harmony. `sensei-dog-rest.png` is the menu companion. Sensei is index 6 and immediately available; indices 4–5 remain secret. Other heroes keep their existing animation system.
+
+Browser verification: `scripts/qa_sensei.py`; screenshots in `artifacts/qa/sensei-*.png`.
+
+## Stella — animation v2
+
+Source supplied by the user: `concept/chars-2/Stella-sprite.png`. Rebuild with `python scripts/prepare_stella.py` (Pillow, NumPy); authored crop coordinates are retained, no generated artwork. Active atlas: `characters/stella/atlas-v2.png/json`, 47 padded 256 × 256 frames, support (128,240). Four idle, eight run, four jump, five flip, seven slide, three cast clips and seven fall poses. All poses share one scale. `pets/stella-cat.png` contains four idle, five run and five reaction poses at 128 × 128; support (64,112). Separate menu portrait and resting pet are included.
+
+Normal casts choose fire projectile or fire wave; burst has a 10% chance, waits 360 ms and defeats the nearest visible enemy on the owner's lane. Choice is derived from cooldown timestamp and player index so local play, server replay and spectators agree. Burst rewards follow the usual enemy rules. Browser QA: `scripts/qa_stella.py`.

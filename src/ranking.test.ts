@@ -62,10 +62,10 @@ test('submitRankingResult: when online, calls api and does not queue', async () 
     true
   );
 
-  assert.deepEqual(res, { ok: true, offline: false });
+  assert.deepEqual(res, { ok: true, offline: false, state: 'published', provenance: 'verified' });
   assert.equal(calledPath, 'results');
   assert.equal(calledBody.name, 'Sofia');
-  assert.equal(calledBody.score, 800);
+  assert.equal(calledBody.score, undefined);
   assert.equal(getPendingRankings().length, 0);
 
   // Local record must also be saved
@@ -92,7 +92,7 @@ test('submitRankingResult: when offline or api fails, queues to pending sync', a
     false // offline
   );
 
-  assert.deepEqual(res, { ok: true, offline: true });
+  assert.deepEqual(res, { ok: true, offline: true, state: 'pending' });
   const pending = getPendingRankings();
   assert.equal(pending.length, 1);
   assert.equal(pending[0].name, 'Stella');
@@ -201,4 +201,76 @@ test('RankingFlowController: solo player can save and finish', async () => {
   assert.equal(res.ok, true);
   assert.equal(controller.isComplete, true);
   assert.equal(controller.hasSaved(0), true);
+});
+
+test('finish survives reload and is acknowledged before a queued name', async () => {
+  const { queueJourneyFinish, getPendingFinishes } = await import('./ranking.ts');
+  queueJourneyFinish('journey', { token: 'proof', heroes: [0], logs: [[], [], []] });
+  await submitRankingResult({ id: 'journey', token: 'proof', player: 0, name: 'Hero', score: 50, difficulty: 'easy' }, async () => {}, false);
+  const paths: string[] = [];
+  assert.equal(getPendingFinishes()[0].payload.logs.length, 3);
+  assert.equal(await syncPendingRankings(async path => { paths.push(path); }, true), 1);
+  assert.deepEqual(paths, ['attempts/journey/finish', 'results']);
+  assert.equal(getPendingFinishes()[0].state, 'published');
+});
+
+test('permanent proof error does not block later entries or silently publish offline', async () => {
+  const { RankingApiError, publishPendingOffline } = await import('./ranking.ts');
+  for (const id of ['bad', 'good']) queuePendingRanking({ id, token: 'proof', player: 0, name: id, score: 20, difficulty: 'easy', timestamp: 1 });
+  const paths: string[] = [];
+  assert.equal(await syncPendingRankings(async (path, body: any) => {
+    paths.push(path); if (body.id === 'bad') throw new RankingApiError(403, 'proof_unavailable', 'Expired', false);
+  }, true), 1);
+  assert.equal(getPendingRankings()[0].state, 'needs-retry');
+  assert.ok(!paths.includes('results/offline'));
+  publishPendingOffline('bad', 0);
+  await syncPendingRankings(async path => { paths.push(path); }, true);
+  assert.equal(paths.at(-1), 'results/offline');
+});
+
+test('storage failure is explicit and defeat never queues a shared result', async () => {
+  const original = mockLocalStorage.setItem;
+  mockLocalStorage.setItem = () => { throw new Error('Quota exceeded'); };
+  try {
+    const result = await submitRankingResult({ id: 'x', player: 0, name: 'Hero', score: 1, difficulty: 'easy' }, async () => {}, false);
+    assert.equal(result.ok, false); assert.equal(result.state, 'storage-error');
+  } finally { mockLocalStorage.setItem = original; }
+  let calls = 0;
+  const result = await submitRankingResult({ id: 'defeat', player: 0, name: 'Hero', score: 1, difficulty: 'easy', deviceOnly: true }, async () => { calls++; });
+  assert.equal(result.state, 'device-only'); assert.equal(calls, 0); assert.equal(getPendingRankings().length, 0);
+});
+
+test('lost finish stays durable and names wait for a successful finish retry', async () => {
+  const { queueJourneyFinish, getPendingFinishes, RankingApiError } = await import('./ranking.ts');
+  queueJourneyFinish('lost', { token: 'proof', heroes: [1], logs: [[{ tick: 4, player: 0, kind: 'jump', pressed: true }], [], []] });
+  const paths: string[] = [];
+  const entry = { id: 'lost', token: 'proof', player: 0, name: 'Hero', score: 10, difficulty: 'easy' as const };
+  const result = await submitRankingResult(entry, async path => { paths.push(path); throw new RankingApiError(503, 'database_unavailable', 'Retry later', true); });
+  assert.equal(result.state, 'pending'); assert.deepEqual(paths, ['attempts/lost/finish']);
+  assert.equal(getPendingFinishes()[0].payload.logs[0][0].tick, 4);
+  assert.equal(await syncPendingRankings(async path => { paths.push(path); }), 1);
+  assert.deepEqual(paths, ['attempts/lost/finish', 'attempts/lost/finish', 'results']);
+  assert.equal(getPendingRankings().length, 0);
+});
+
+
+test('published receipts survive reload and resync without duplicating a player', async () => {
+  const entry = {id: 'receipt', token: 'proof', player: 0, name: 'Hero', score: 12, difficulty: 'easy' as const};
+  await submitRankingResult(entry, async () => ({}), false);
+  await syncPendingRankings(async () => ({}), true);
+  await syncPendingRankings(async () => ({}), true);
+  const receipts = JSON.parse(localStorage.getItem('jump-published')!);
+  assert.equal(receipts.length, 1);
+  assert.equal(receipts[0].provenance, 'verified');
+  assert.equal(receipts[0].state, 'published');
+  assert.equal(receipts[0].token, undefined);
+  assert.equal(getPendingRankings().length, 0);
+});
+
+test('offline publication and defeated device receipts retain distinct labels', async () => {
+  await submitRankingResult({id: 'offline', player: 0, name: 'Offline', score: 12, difficulty: 'easy'}, async () => ({}), true);
+  await submitRankingResult({id: 'defeat', player: 0, name: 'Local', score: 3, difficulty: 'easy', deviceOnly: true}, async () => { throw new Error('must not send'); }, true);
+  const receipts = JSON.parse(localStorage.getItem('jump-published')!);
+  assert.equal(receipts[0].provenance, 'offline');
+  assert.equal(receipts[1].state, 'device-only');
 });

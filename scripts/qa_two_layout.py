@@ -60,7 +60,7 @@ with sync_playwright() as p:
             s.updateCue(item);
           }
           for(const shot of s.shots) {
-            close(shot.icon.scaleX,zoom);
+            close(shot.icon.scaleX,.7*zoom);
             close(shot.icon.y,s.ground(shot.row)-30*zoom);
           }
           const floor=s.background.layers[2];

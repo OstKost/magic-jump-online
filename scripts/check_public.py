@@ -9,7 +9,7 @@ u=urllib.parse.urlsplit(base);port=u.port or (443 if u.scheme=='https' else 80)
 sock=socket.create_connection((u.hostname,port),timeout=15)
 if u.scheme=='https':sock=ssl.create_default_context().wrap_socket(sock,server_hostname=u.hostname)
 key=base64.b64encode(os.urandom(16)).decode()
-sock.sendall((f'GET /api/rooms/{room["code"]}/ws HTTP/1.1\r\nHost: {u.netloc}\r\nOrigin: {base}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Protocol: jump-v1\r\n\r\n').encode())
+sock.sendall((f'GET /api/rooms/{room["code"]}/ws HTTP/1.1\r\nHost: {u.netloc}\r\nOrigin: {base}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Protocol: jump-v2\r\n\r\n').encode())
 headers=b''
 while not headers.endswith(b'\r\n\r\n'):headers+=sock.recv(1)
 assert b'101 Switching Protocols' in headers,headers

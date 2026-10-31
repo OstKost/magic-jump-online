@@ -28,8 +28,8 @@ test('double cue waits for the second jump and permits its delay', () => {
 test('missed cues fade over 150ms and game time freezes bob and fade on pause', () => {
   const cue:TutorialCue={row:0,action:'duck',offset:54};
   const start=cueFrame(cue,180,270,100);
-  assert.equal(start.alpha,.7);
+  assert.equal(start.alpha,.95);
   assert.deepEqual(cueFrame(cue,180,270,100),start);
-  assert.equal(cueFrame(cue,180,270,175).alpha,.35);
+  assert.equal(cueFrame(cue,180,270,175).alpha,.475);
   assert.equal(cueFrame(cue,180,270,250).alpha,0);
 });

@@ -24,26 +24,34 @@ import (
 )
 
 type Member struct {
-	ID        string `json:"id"`
-	Hero      int    `json:"hero"`
-	Ready     bool   `json:"ready"`
-	Connected bool   `json:"connected"`
-	token     string
-	conn      *websocket.Conn
-	gone      time.Time
-	lastInput time.Time
+	ID                string `json:"id"`
+	Hero              int    `json:"hero"`
+	Ready             bool   `json:"ready"`
+	Connected         bool   `json:"connected"`
+	token             string
+	conn              *websocket.Conn
+	ReconnectDeadline int64 `json:"reconnectDeadline,omitempty"`
+	out               chan []byte
+	gone              time.Time
+	lastInput         time.Time
 }
 type Room struct {
-	Code       string    `json:"code"`
-	Host       string    `json:"host"`
-	Phase      string    `json:"phase"`
-	Difficulty string    `json:"difficulty"`
-	Members    []*Member `json:"members"`
-	Engine     *Engine   `json:"engine,omitempty"`
-	ID         string    `json:"id"`
-	Seed       uint32    `json:"seed"`
-	created    time.Time
-	finished   time.Time
+	Code             string    `json:"code"`
+	Host             string    `json:"host"`
+	Phase            string    `json:"phase"`
+	Difficulty       string    `json:"difficulty"`
+	Members          []*Member `json:"members"`
+	Engine           *Engine   `json:"engine,omitempty"`
+	ID               string    `json:"id"`
+	Seed             uint32    `json:"seed"`
+	ServerTime       int64     `json:"serverTime"`
+	Persistence      string    `json:"persistence"`
+	PersistenceError string    `json:"persistenceError,omitempty"`
+	persistAttempts  int
+	persistNext      time.Time
+	persistBusy      bool
+	created          time.Time
+	finished         time.Time
 }
 type Attempt struct {
 	ID         string `json:"id"`
@@ -88,7 +96,7 @@ func decode(w http.ResponseWriter, r *http.Request, v any) bool {
 	d := json.NewDecoder(r.Body)
 	d.DisallowUnknownFields()
 	if err := d.Decode(v); err != nil {
-		http.Error(w, "Некорректный запрос", 400)
+		apiError(w, 400, "invalid_request", "Некорректный запрос", false)
 		return false
 	}
 	return true
@@ -111,7 +119,6 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 	}
 	now := time.Now()
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	var recent []time.Time
 	for _, t := range s.limits[host] {
 		if now.Sub(t) < time.Minute {
@@ -119,10 +126,12 @@ func (s *Server) allowed(w http.ResponseWriter, r *http.Request) bool {
 		}
 	}
 	if len(recent) >= 120 {
+		s.mu.Unlock()
 		http.Error(w, "Слишком много запросов", 429)
 		return false
 	}
 	s.limits[host] = append(recent, now)
+	s.mu.Unlock()
 	return true
 }
 func (s *Server) routes() http.Handler {
@@ -137,9 +146,11 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/rooms", s.createRoom)
 	mux.HandleFunc("POST /api/rooms/{code}/join", s.joinRoom)
 	mux.HandleFunc("GET /api/rooms/{code}/ws", s.socket)
+	mux.HandleFunc("POST /api/rooms/{code}/status", s.roomStatus)
 	mux.HandleFunc("POST /api/attempts", s.createAttempt)
 	mux.HandleFunc("POST /api/attempts/{id}/finish", s.finishAttempt)
 	mux.HandleFunc("POST /api/results", s.saveResult)
+	mux.HandleFunc("POST /api/results/offline", s.saveOfflineResult)
 	mux.HandleFunc("GET /api/ranking", s.ranking)
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		root := env("STATIC_DIR", "../dist")
@@ -166,9 +177,19 @@ func (s *Server) routes() http.Handler {
 	})
 }
 func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
+	diff := "medium"
+	var req struct {
+		Difficulty string `json:"difficulty"`
+	}
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		if req.Difficulty == "easy" || req.Difficulty == "medium" || req.Difficulty == "hard" {
+			diff = req.Difficulty
+		}
+	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if len(s.rooms) >= 500 {
+		s.mu.Unlock()
 		http.Error(w, "Сервер занят", 503)
 		return
 	}
@@ -180,30 +201,22 @@ func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	diff := "medium"
-	var req struct {
-		Difficulty string `json:"difficulty"`
-	}
-	if r.Body != nil {
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		if req.Difficulty == "easy" || req.Difficulty == "medium" || req.Difficulty == "hard" {
-			diff = req.Difficulty
-		}
-	}
 	m := &Member{ID: token(), token: token(), Hero: 0, gone: time.Now()}
 	room := &Room{Code: code, Host: m.ID, Phase: "lobby", Difficulty: diff, Members: []*Member{m}, ID: token(), Seed: seed(), created: time.Now()}
 	s.rooms[code] = room
+	s.mu.Unlock()
 	send(w, map[string]any{"code": code, "token": m.token, "id": m.ID})
 }
 func (s *Server) joinRoom(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	room := s.rooms[r.PathValue("code")]
 	if room == nil {
+		s.mu.Unlock()
 		http.Error(w, "Комната не найдена", 404)
 		return
 	}
 	if room.Phase != "lobby" || len(room.Members) >= 4 {
+		s.mu.Unlock()
 		http.Error(w, "Комната заполнена или игра уже началась", 409)
 		return
 	}
@@ -218,24 +231,121 @@ func (s *Server) joinRoom(w http.ResponseWriter, r *http.Request) {
 	m := &Member{ID: token(), token: token(), Hero: h, gone: time.Now()}
 	room.Members = append(room.Members, m)
 	s.broadcast(room)
+	s.mu.Unlock()
 	send(w, map[string]any{"code": room.Code, "token": m.token, "id": m.ID})
 }
+
+// Called under mu: only immutable bytes enter a bounded per-connection queue.
 func (s *Server) broadcast(room *Room) {
+	room.ServerTime = time.Now().UnixMilli()
 	for _, m := range room.Members {
-		if m.conn != nil {
-			_ = m.conn.SetWriteDeadline(time.Now().Add(150 * time.Millisecond))
-			if err := m.conn.WriteJSON(room); err != nil {
-				_ = m.conn.Close()
-				m.conn = nil
-				m.Connected = false
-				m.gone = time.Now()
+		if !m.gone.IsZero() {
+			m.ReconnectDeadline = m.gone.Add(30 * time.Second).UnixMilli()
+		} else {
+			m.ReconnectDeadline = 0
+		}
+	}
+	data, err := json.Marshal(room)
+	if err != nil {
+		log.Printf("snapshot room=%s: %v", room.ID, err)
+		return
+	}
+	for _, m := range room.Members {
+		if m.conn != nil && m.out != nil {
+			select {
+			case m.out <- data:
+			default:
+				select {
+				case <-m.out:
+				default:
+				}
+				select {
+				case m.out <- data:
+				default:
+				}
 			}
 		}
 	}
 }
+func socketWriter(c *websocket.Conn, out <-chan []byte, done <-chan struct{}) {
+	for {
+		select {
+		case <-done:
+			return
+		case data := <-out:
+			_ = c.SetWriteDeadline(time.Now().Add(150 * time.Millisecond))
+			if err := c.WriteMessage(websocket.TextMessage, data); err != nil {
+				_ = c.Close()
+				return
+			}
+		}
+	}
+}
+
+// Only one persistence job per room; immutable players and DB work stay outside mu.
+func (s *Server) persistRoom(room *Room) {
+	if room.persistBusy || room.Persistence == "saved" || room.Engine == nil || room.Engine.allDead() {
+		return
+	}
+	room.persistBusy = true
+	room.Persistence = "pending"
+	room.persistAttempts++
+	id, players, finished, diff := room.ID, append([]Body(nil), room.Engine.Players...), room.finished, room.Difficulty
+	go func() {
+		err := s.record(id, players, finished, diff)
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		room.persistBusy = false
+		if err != nil {
+			room.Persistence = "error"
+			room.PersistenceError = "database_unavailable"
+			room.persistNext = time.Now().Add(time.Duration(room.persistAttempts) * time.Second)
+			log.Printf("persist room=%s attempt=%d: %v", id, room.persistAttempts, err)
+		} else {
+			room.Persistence = "saved"
+			room.PersistenceError = ""
+		}
+		s.broadcast(room)
+	}()
+}
+
+// A disconnected client can obtain an authoritative deadline without putting credentials in URLs.
+func (s *Server) roomStatus(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token string `json:"token"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	s.mu.Lock()
+	room := s.rooms[r.PathValue("code")]
+	var data []byte
+	if room != nil && req.Token != "" {
+		for _, m := range room.Members {
+			if m.token == req.Token {
+				room.ServerTime = time.Now().UnixMilli()
+				for _, other := range room.Members {
+					if !other.gone.IsZero() {
+						other.ReconnectDeadline = other.gone.Add(30 * time.Second).UnixMilli()
+					}
+				}
+				data, _ = json.Marshal(room)
+			}
+		}
+	}
+	s.mu.Unlock()
+	if data == nil {
+		apiError(w, 404, "room_unavailable", "Сессия комнаты недоступна", false)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(data)
+}
+
 func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 	// Authenticate in the first frame so credentials do not enter access-log URLs.
-	up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }, Subprotocols: []string{"jump-v1"}}
+	up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }, Subprotocols: []string{"jump-v2"}}
 	c, err := up.Upgrade(w, r, nil)
 	if err != nil {
 		return
@@ -259,6 +369,9 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if member != nil && room.Engine != nil && !member.gone.IsZero() && time.Since(member.gone) > 30*time.Second {
+		member = nil
+	}
 	if member != nil && room.Engine != nil {
 		for i, m := range room.Members {
 			if m == member && !room.Engine.Players[i].Eligible {
@@ -268,14 +381,18 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if member == nil {
-		_ = c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(1008, "Сессия истекла"), time.Now().Add(time.Second))
 		s.mu.Unlock()
+		_ = c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(1008, "Сессия истекла"), time.Now().Add(time.Second))
 		return
 	}
 	if member.conn != nil {
 		_ = member.conn.Close()
 	}
 	member.conn = c
+	member.out = make(chan []byte, 2)
+	writerDone := make(chan struct{})
+	defer close(writerDone)
+	go socketWriter(c, member.out, writerDone)
 	member.Connected = true
 	member.gone = time.Time{}
 	s.broadcast(room)
@@ -379,7 +496,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 						totals = append(totals, score)
 					}
 				}
-				if ready && level < 5 {
+				if ready && level < journeyStages {
 					previous := room.Engine
 					room.Engine = newEngineWithDifficulty(room.Seed, level, heroes, totals, room.Difficulty)
 					if previous != nil {
@@ -393,7 +510,7 @@ func (s *Server) socket(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-		case "jump", "duck", "cast":
+		case "jump", "duck", "cast", "dash":
 			if room.Phase == "playing" && (msg.Type == "duck" && !msg.Pressed || time.Since(member.lastInput) >= 10*time.Millisecond) {
 				room.Engine.input(Action{Player: idx, Kind: msg.Type, Pressed: msg.Pressed})
 				member.lastInput = time.Now()
@@ -419,7 +536,7 @@ func (s *Server) loop(stop <-chan struct{}) {
 		case now := <-ticker.C:
 			s.mu.Lock()
 			for code, room := range s.rooms {
-				if now.Sub(room.created) > 2*time.Hour || (!room.finished.IsZero() && now.Sub(room.finished) > 10*time.Minute) {
+				if now.Sub(room.created) > 2*time.Hour || (!room.finished.IsZero() && now.Sub(room.finished) > 10*time.Minute && (room.Persistence == "saved" || room.Persistence == "device-only")) {
 					for _, m := range room.Members {
 						if m.conn != nil {
 							_ = m.conn.Close()
@@ -465,18 +582,14 @@ func (s *Server) loop(stop <-chan struct{}) {
 						maxTicks = 2500
 					}
 					if room.Engine.Tick >= maxTicks || room.Engine.allDead() {
-						diff := room.Difficulty
-						if diff == "" {
-							diff = "medium"
-						}
 						if room.Engine.allDead() {
 							room.Phase = "finished"
 							room.finished = now
-							s.record(room.ID, room.Engine.Players, now, diff)
-						} else if room.Engine.Level == 4 {
+							room.Persistence = "device-only"
+						} else if room.Engine.Level == journeyStages-1 {
 							room.Phase = "finished"
 							room.finished = now
-							s.record(room.ID, room.Engine.Players, now, diff)
+							s.persistRoom(room)
 						} else {
 							room.Phase = "between"
 						}
@@ -484,6 +597,9 @@ func (s *Server) loop(stop <-chan struct{}) {
 							m.Ready = false
 						}
 					}
+				}
+				if room.Phase == "finished" && room.Persistence == "error" && room.persistAttempts < 3 && now.After(room.persistNext) {
+					s.persistRoom(room)
 				}
 				if room.Engine == nil || room.Phase != "playing" || room.Engine.Tick%3 == 0 {
 					s.broadcast(room)
@@ -518,13 +634,14 @@ func (s *Server) createAttempt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if len(s.attempts) >= 10000 {
+		s.mu.Unlock()
 		http.Error(w, "Сервер занят", 503)
 		return
 	}
 	a := &Attempt{ID: token(), Token: token(), Seed: seed(), Count: req.Count, Difficulty: req.Difficulty, created: time.Now()}
 	s.attempts[a.ID] = a
+	s.mu.Unlock()
 	send(w, a)
 }
 func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
@@ -537,36 +654,41 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	a := s.attempts[r.PathValue("id")]
-	if a == nil || a.Token != req.Token {
-		http.Error(w, "Попытка не найдена", 404)
+	original := s.attempts[r.PathValue("id")]
+	var a *Attempt
+	if original != nil {
+		copy := *original
+		a = &copy
+	}
+	s.mu.Unlock()
+	if a == nil || a.Token != req.Token || req.Token == "" || time.Since(a.created) > 2*time.Hour {
+		apiError(w, 404, "proof_unavailable", "Попытка не найдена или истекла", false)
 		return
 	}
 	if a.done {
 		send(w, map[string]any{"id": a.ID, "players": a.players})
 		return
 	}
-	minElapsed := 300 * time.Second
+	minElapsed := 180 * time.Second
 	maxTicks := 3000
 	if a.Difficulty == "easy" {
-		minElapsed = 75 * time.Second
+		minElapsed = 60 * time.Second
 		maxTicks = 1000
 	} else if a.Difficulty == "medium" {
-		minElapsed = 150 * time.Second
+		minElapsed = 120 * time.Second
 		maxTicks = 2000
 	} else if a.Difficulty == "hard" {
-		minElapsed = 190 * time.Second
+		minElapsed = 150 * time.Second
 		maxTicks = 2500
 	}
-	if time.Since(a.created) < minElapsed || time.Since(a.created) > 2*time.Hour || len(req.Heroes) != a.Count || len(req.Logs) != 5 {
-		http.Error(w, "Незавершённое путешествие", 400)
+	if time.Since(a.created) < minElapsed || time.Since(a.created) > 2*time.Hour || len(req.Heroes) != a.Count || len(req.Logs) != journeyStages {
+		apiError(w, 400, "invalid_journey", "Незавершённое путешествие", false)
 		return
 	}
 	used := map[int]bool{}
 	for _, h := range req.Heroes {
 		if h < 0 || h > 5 || used[h] {
-			http.Error(w, "Недопустимые герои", 400)
+			apiError(w, 400, "invalid_heroes", "Недопустимые герои", false)
 			return
 		}
 		used[h] = true
@@ -575,13 +697,13 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 	var engine *Engine
 	for level, logs := range req.Logs {
 		if len(logs) > 20000 {
-			http.Error(w, "Слишком много действий", 400)
+			apiError(w, 400, "too_many_actions", "Слишком много действий", false)
 			return
 		}
 		last := -1
 		for _, action := range logs {
-			if action.Tick < last || action.Tick < 0 || action.Tick >= maxTicks || action.Player < 0 || action.Player >= a.Count || (action.Kind != "jump" && action.Kind != "duck" && action.Kind != "cast") {
-				http.Error(w, "Некорректный журнал", 400)
+			if action.Tick < last || action.Tick < 0 || action.Tick >= maxTicks || action.Player < 0 || action.Player >= a.Count || (action.Kind != "jump" && action.Kind != "duck" && action.Kind != "cast" && action.Kind != "dash") {
+				apiError(w, 400, "invalid_log", "Некорректный журнал", false)
 				return
 			}
 			last = action.Tick
@@ -595,7 +717,7 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 			}
 			engine.step()
 			if engine.allDead() {
-				http.Error(w, "Путешествие завершилось поражением", 400)
+				apiError(w, 400, "journey_defeated", "Путешествие завершилось поражением", false)
 				return
 			}
 		}
@@ -605,11 +727,13 @@ func (s *Server) finishAttempt(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err := s.record(a.ID, engine.Players, time.Now(), a.Difficulty); err != nil {
-		http.Error(w, "Не удалось сохранить результат", 500)
+		apiError(w, 503, "database_unavailable", "Не удалось сохранить результат", true)
 		return
 	}
-	a.done = true
-	a.players = engine.Players
+	s.mu.Lock()
+	original.done = true
+	original.players = append([]Body(nil), engine.Players...)
+	s.mu.Unlock()
 	send(w, map[string]any{"id": a.ID, "players": engine.Players})
 }
 func (s *Server) record(id string, players []Body, now time.Time, difficulty string) error {
@@ -623,7 +747,7 @@ func (s *Server) record(id string, players []Body, now time.Time, difficulty str
 	}
 	for i, p := range players {
 		if p.Eligible {
-			if _, err = tx.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished,difficulty) VALUES(?,?,?,?,?,?)", id, i, p.Score, week(now), now.Unix(), difficulty); err != nil {
+			if _, err = tx.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished,difficulty,provenance) VALUES(?,?,?,?,?,?,'verified')", id, i, p.Score, week(now), now.Unix(), difficulty); err != nil {
 				return err
 			}
 		}
@@ -644,84 +768,115 @@ func (s *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.TrimSpace(req.Name)
 	if len([]rune(name)) < 1 || len([]rune(name)) > 20 || strings.IndexFunc(name, unicode.IsControl) >= 0 {
-		http.Error(w, "Имя должно содержать от 1 до 20 символов", 400)
+		apiError(w, 400, "invalid_name", "Имя должно содержать от 1 до 20 символов", false)
 		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	valid := false
 	if a := s.attempts[req.ID]; a != nil {
-		if !a.done || a.Token != req.Token || req.Player < 0 || req.Player >= a.Count {
-			http.Error(w, "Недопустимая сессия", 403)
-			return
-		}
-		valid = true
+		valid = a.done && (a.created.IsZero() || time.Since(a.created) <= 2*time.Hour) && a.Token == req.Token && req.Token != "" && req.Player >= 0 && req.Player < a.Count
 	}
 	for _, room := range s.rooms {
-		if room.ID == req.ID {
-			if room.Phase != "finished" || req.Player < 0 || req.Player >= len(room.Members) || room.Members[req.Player].token != req.Token {
-				http.Error(w, "Недопустимая сессия", 403)
-				return
-			}
+		if room.ID == req.ID && room.Phase == "finished" && room.Engine != nil && !room.Engine.allDead() && req.Player >= 0 && req.Player < len(room.Members) && room.Members[req.Player].token == req.Token && req.Token != "" && room.Engine.Players[req.Player].Eligible {
 			valid = true
+			if room.Persistence != "saved" {
+				s.persistRoom(room)
+			}
 		}
 	}
-	if valid {
-		res, err := s.db.Exec("UPDATE results SET name=? WHERE match_id=? AND player=? AND name IS NULL", name, req.ID, req.Player)
-		if err != nil {
-			http.Error(w, "Не удалось записать имя", 500)
-			return
-		}
-		n, _ := res.RowsAffected()
-		if n == 0 {
-			http.Error(w, "Результат уже записан или игрок не найден", 409)
-			return
-		}
-		send(w, map[string]bool{"ok": true})
+	s.mu.Unlock()
+	if !valid {
+		apiError(w, 403, "proof_unavailable", "Подтверждение результата недоступно", false)
 		return
 	}
-
-	diff := req.Difficulty
-	if diff != "easy" && diff != "medium" && diff != "hard" {
-		diff = "medium"
-	}
-	if req.Score <= 0 || req.Score > 500000 {
-		http.Error(w, "Недопустимый счёт", 400)
-		return
-	}
-	now := time.Now()
-	matchID := req.ID
-	if matchID == "" {
-		matchID = token()
-	}
-	_, err := s.db.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished,name,difficulty) VALUES(?,?,?,?,?,?,?)",
-		matchID, req.Player, req.Score, week(now), now.Unix(), name, diff)
+	s.nameResult(w, req.ID, req.Player, name)
+}
+func apiError(w http.ResponseWriter, status int, code, message string, retryable bool) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	send(w, map[string]any{"code": code, "message": message, "retryable": retryable})
+}
+func (s *Server) nameResult(w http.ResponseWriter, id string, player int, name string) {
+	_, err := s.db.Exec("UPDATE results SET name=? WHERE match_id=? AND player=? AND name IS NULL", name, id, player)
 	if err != nil {
-		http.Error(w, "Не удалось сохранить результат", 500)
+		apiError(w, 503, "database_unavailable", "Не удалось записать имя", true)
+		return
+	}
+	var saved sql.NullString
+	err = s.db.QueryRow("SELECT name FROM results WHERE match_id=? AND player=?", id, player).Scan(&saved)
+	if err == sql.ErrNoRows {
+		apiError(w, 409, "result_pending", "Результат ещё не записан; повторите", true)
+		return
+	}
+	if err != nil {
+		apiError(w, 503, "database_unavailable", "База недоступна", true)
+		return
+	}
+	if !saved.Valid || saved.String != name {
+		apiError(w, 409, "name_conflict", "У результата уже другое имя", false)
 		return
 	}
 	send(w, map[string]bool{"ok": true})
 }
+func (s *Server) saveOfflineResult(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ID         string `json:"id"`
+		Player     int    `json:"player"`
+		Name       string `json:"name"`
+		Score      int    `json:"score"`
+		Difficulty string `json:"difficulty"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	if req.ID == "" || len(req.ID) > 150 || req.Player < 0 || req.Player > 3 || len([]rune(req.Name)) < 1 || len([]rune(req.Name)) > 20 || strings.IndexFunc(req.Name, unicode.IsControl) >= 0 || req.Score < 0 || req.Score > 500000 || (req.Difficulty != "easy" && req.Difficulty != "medium" && req.Difficulty != "hard") {
+		apiError(w, 400, "invalid_offline_result", "Некорректный автономный результат", false)
+		return
+	}
+	// Namespace prevents an offline submission from naming or replacing proven rows.
+	id := "offline:" + req.ID
+	now := time.Now()
+	_, err := s.db.Exec("INSERT OR IGNORE INTO results(match_id,player,score,week,finished,name,difficulty,provenance) VALUES(?,?,?,?,?,?,?,'offline')", id, req.Player, req.Score, week(now), now.Unix(), req.Name, req.Difficulty)
+	if err != nil {
+		apiError(w, 503, "database_unavailable", "База недоступна", true)
+		return
+	}
+	var score int
+	var diff, name string
+	err = s.db.QueryRow("SELECT score,difficulty,name FROM results WHERE match_id=? AND player=?", id, req.Player).Scan(&score, &diff, &name)
+	if err != nil {
+		apiError(w, 503, "database_unavailable", "База недоступна", true)
+		return
+	}
+	if score != req.Score || diff != req.Difficulty || name != req.Name {
+		apiError(w, 409, "offline_conflict", "Идентификатор уже использован", false)
+		return
+	}
+	send(w, map[string]any{"ok": true, "provenance": "offline"})
+}
+
 func (s *Server) ranking(w http.ResponseWriter, r *http.Request) {
 	current := week(time.Now())
 	diff := r.URL.Query().Get("difficulty")
 	if diff == "" {
 		diff = "medium"
 	}
-	rows, err := s.db.Query("SELECT name,score FROM results WHERE week=? AND difficulty=? AND name IS NOT NULL ORDER BY score DESC,finished ASC,match_id ASC,player ASC LIMIT 20", current, diff)
+	rows, err := s.db.Query("SELECT name,score,provenance FROM results WHERE week=? AND difficulty=? AND name IS NOT NULL ORDER BY score DESC,finished ASC,match_id ASC,player ASC LIMIT 20", current, diff)
 	if err != nil {
 		http.Error(w, "Рейтинг недоступен", 500)
 		return
 	}
 	defer rows.Close()
 	type Entry struct {
-		Name  string `json:"name"`
-		Score int    `json:"score"`
+		Name       string `json:"name"`
+		Score      int    `json:"score"`
+		Provenance string `json:"provenance"`
 	}
 	entries := []Entry{}
 	for rows.Next() {
 		var e Entry
-		if err := rows.Scan(&e.Name, &e.Score); err != nil {
+		if err := rows.Scan(&e.Name, &e.Score, &e.Provenance); err != nil {
 			http.Error(w, "Рейтинг недоступен", 500)
 			return
 		}
@@ -758,6 +913,7 @@ CREATE TABLE IF NOT EXISTS results(
 	if err != nil {
 		return nil, err
 	}
+	_, _ = db.Exec("ALTER TABLE results ADD COLUMN provenance TEXT NOT NULL DEFAULT 'offline'")
 	_, _ = db.Exec("ALTER TABLE results ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'medium'")
 	_, _ = db.Exec(`
 CREATE INDEX IF NOT EXISTS ranking_week ON results(week,score DESC);

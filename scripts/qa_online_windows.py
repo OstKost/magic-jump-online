@@ -1,4 +1,4 @@
-"""Controlled online snapshots exercise 1–3 previews, sizing and both magic buttons."""
+"""Controlled online snapshots exercise 1–3 previews, sizing and controls."""
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -27,7 +27,7 @@ with sync_playwright() as p:
         assert abs(own['width']-width)<1
         assert friends['y']+friends['height']<=own['y']+1
         assert own['y']+own['height']<=controls['y']+1
-        rects=[page.locator('#'+name).bounding_box() for name in ['online-jump','online-cast','online-cast-mirror','online-duck']]
+        rects=[page.locator('#'+name).bounding_box() for name in ['online-duck','online-cast','online-dash','online-jump']]
         assert [r['x'] for r in rects]==sorted(r['x'] for r in rects)
         for rect in rects+[page.locator('#online-back').bounding_box()]:
             assert rect['x']>=0 and rect['x']+rect['width']<=width,(width,rect)
@@ -36,11 +36,11 @@ with sync_playwright() as p:
     for previews in [1,2,3]:
         page.evaluate(f"testRoom.members=['me','a','b','c'].slice(0,{previews+1}).map((id,i)=>({{id,hero:i,ready:true,connected:true}}));deliver()")
         assert page.locator('#opponent-lanes canvas').count()==previews
-    for selector in ['#online-cast','#online-cast-mirror']:
-        page.locator(selector).dispatch_event('pointerdown')
-    assert page.evaluate("commands.filter(command=>command.type==='cast').length") == 2
+    page.locator('#online-cast').dispatch_event('pointerdown')
+    page.locator('#online-dash').dispatch_event('pointerdown')
+    assert page.evaluate("commands.some(command=>command.type==='cast') && commands.some(command=>command.type==='dash')")
     page.evaluate('testRoom.engine.players[0].readyAt=3500;deliver()')
     page.wait_for_timeout(100)
-    assert page.locator('#online-cast').is_disabled() and page.locator('#online-cast-mirror').is_disabled()
+    assert page.locator('#online-cast').is_disabled()
     assert not errors,errors
-    browser.close();print('Online previews, common window, thumb controls, mirrored spells and cooldowns passed')
+    browser.close();print('Online previews, common window, thumb controls and cooldowns passed')

@@ -42,18 +42,18 @@ with sync_playwright() as p:
                     assert rect and rect['y']>=window['y'] and rect['y']+rect['height']<=window['y']+window['height']
                 assert page.locator(f'[data-player-window="{row}"] .lane-location').inner_text()
             if count == 1:
-                jump=page.locator('[data-jump="0"]').bounding_box()
-                cast=page.locator('[data-cast="0"]').first.bounding_box()
-                mirror=page.locator('.cast-mirror').bounding_box()
                 duck=page.locator('[data-duck="0"]').bounding_box()
+                cast=page.locator('[data-cast="0"]').first.bounding_box()
+                dash=page.locator('[data-dash="0"]').bounding_box()
+                jump=page.locator('[data-jump="0"]').bounding_box()
                 scene=page.locator('#game').bounding_box()
-                assert jump['x']<cast['x']<mirror['x']<duck['x']
-                assert min(rect['y'] for rect in [jump,cast,mirror,duck])>=scene['y']+scene['height']-1
+                assert duck['x']<cast['x']<dash['x']<jump['x']
+                assert min(rect['y'] for rect in [duck,cast,dash,jump])>=scene['y']+scene['height']-1
             else:
                 game=page.locator('#game').bounding_box()
                 for row in range(2):
-                    buttons=[page.locator(f'[data-{kind}="{row}"]').first.bounding_box() for kind in ['jump','cast','duck']]
-                    assert buttons[0]['y']<buttons[1]['y']<buttons[2]['y']
+                    buttons=[page.locator(f'[data-{kind}="{row}"]').first.bounding_box() for kind in ['jump','dash','cast','duck']]
+                    assert buttons[0]['y']<buttons[1]['y']<buttons[2]['y']<buttons[3]['y']
                     for rect in buttons:
                         assert rect['width']>=48 and rect['height']>=48
                         assert rect['x']+rect['width']<=game['x'] if row==0 else rect['x']>=game['x']+game['width']

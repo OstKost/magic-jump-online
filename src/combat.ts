@@ -1,9 +1,13 @@
 /** Combat distances use the same logical pixels as the runner scene. */
-export const SPELL_COOLDOWN_MS = 2000;
+export const SPELL_COOLDOWN_MS = 500;
 export const SPELL_SPEED = 700;
 export const SPELL_RANGE = 650;
 export const ENEMY_REWARD = 25;
-export const ENEMY_FALL_MS = 400;
+export const ENEMY_FALL_MS = 680;
+
+export const DASH_COOLDOWN_MS = 2000;
+export const DASH_DURATION_MS = 240;
+export const DASH_DISTANCE_PX = 160;
 
 export const ENEMIES = [
   [{ key: 'ninja', name: 'Ниндзя' }, { key: 'archer', name: 'Лучник' }],
@@ -35,5 +39,9 @@ export function firstSpellTarget<T extends CombatTarget>(
 }
 
 export function canCast(elapsed: number, readyAt: number): boolean {
+  return elapsed >= readyAt;
+}
+
+export function canDash(elapsed: number, readyAt: number): boolean {
   return elapsed >= readyAt;
 }

@@ -15,7 +15,7 @@ func TestWorldOrder(t *testing.T) {
 			}
 			seen[world] = true
 		}
-		for stage := 0; stage < 5; stage++ {
+		for stage := 0; stage < journeyStages; stage++ {
 			e := newEngine(seed, stage, []int{0}, nil)
 			if e.World != order[stage] {
 				t.Fatal("world mismatch")
@@ -26,7 +26,7 @@ func TestWorldOrder(t *testing.T) {
 }
 
 func TestWorldOrderSeedFixture(t *testing.T) {
-	want := []int{0, 3, 4, 1, 2}
+	want := []int{0, 3, 4}
 	for i, world := range worldOrder(42) {
 		if world != want[i] {
 			t.Fatal("seed order mismatch")

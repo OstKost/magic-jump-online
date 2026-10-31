@@ -95,27 +95,27 @@ export function obstacleCollision(y: number, ducking: boolean, type: ObstacleTyp
   const top = type === 'overhead' ? 112 : 43;
   return feet < top && head > bottom;
 }
-export interface Spawn { at: number; kind: 'obstacle' | 'bonus' | 'enemy'; variant: number; obstacle?: ObstacleType }
+export interface Spawn { at: number; kind: 'obstacle' | 'bonus' | 'enemy' | 'platform' | 'gap' | 'puddle' | 'fire'; offset?: number; width?: number; height?: number; variant: number; obstacle?: ObstacleType }
 export function schedule(seed: number, difficulty?: DifficultyKey): Spawn[] {
   let state = seed >>> 0;
   const random = () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296; };
   const result: Spawn[] = [];
   let minInterval = 1700;
   let randInterval = 700;
-  let maxAt = 55000;
+  let maxAt = 54000;
 
   if (difficulty === 'easy') {
     minInterval = 1700;
     randInterval = 700;
-    maxAt = 16000;
+    maxAt = 14000;
   } else if (difficulty === 'medium') {
     minInterval = 1450;
     randInterval = 600;
-    maxAt = 36000;
+    maxAt = 34000;
   } else if (difficulty === 'hard') {
     minInterval = 1200;
     randInterval = 500;
-    maxAt = 46000;
+    maxAt = 44000;
   }
 
   for (let at = 2200; at < maxAt; at += minInterval + random() * randInterval) {
@@ -148,9 +148,22 @@ export function route(seed: number, player: number, difficulty?: DifficultyKey):
   const blocks = times.map(at => source.filter(s => s.at === at));
   return times.flatMap((targetAt, i) => {
     const block = blocks[(i + shift) % blocks.length];
-    return block.map(e => ({ ...e, at: targetAt }));
+    const base = block.map(e => ({ ...e, at: targetAt }));
+    const section = (i + shift) % blocks.length;
+    if (section % 4 === 2) {
+      const danger = (['puddle', 'gap', 'fire'] as const)[(Math.floor(section / 4) + (seed >>> 0) % 3) % 3];
+      return [
+        { at: targetAt, kind: 'platform' as const, variant: 0, offset: -90, width: 480, height: 90 },
+        { at: targetAt, kind: danger, variant: 0, width: 260 },
+        ...Array.from({ length: 7 }, (_, n) => ({ at: targetAt, kind: 'bonus' as const, variant: 0, offset: -195 + n * 65, height: 125 })),
+      ];
+    }
+    if (section % 4 === 0) return [...base.filter(e => e.kind !== 'bonus'), ...Array.from({ length: 5 }, (_, n) => ({ at: targetAt, kind: 'bonus' as const, variant: 0, offset: -120 + n * 60, height: Math.round(115 + Math.sin(n / 4 * Math.PI) * 65) }))];
+    return base;
   });
 }
+
+export const JOURNEY_STAGES = 3;
 
 /** The tutorial stays first; the remaining worlds form a seeded permutation. */
 export function worldOrder(seed: number): number[] {
@@ -161,5 +174,5 @@ export function worldOrder(seed: number): number[] {
     const j = 1 + Math.floor(state / 4294967296 * i);
     [order[i], order[j]] = [order[j], order[i]];
   }
-  return order;
+  return order.slice(0, JOURNEY_STAGES);
 }

@@ -33,8 +33,8 @@
 #play-screen .level-progress { position: absolute; top: 45px; right: 1px; width: 75px; height: 2px; background: #fff2; border-radius: 2px; display: block; overflow: hidden; }
 #play-screen .level-progress i { display: block; height: 100%; width: var(--progress, 0%); background: #e4bd82; }
 #play-screen .player-controls {
-  padding: 16px 8px; gap: 12px; align-items: center; justify-content: center;
-  display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); justify-items: center;
+  padding: 12px 6px; gap: 8px; align-items: center; justify-content: center;
+  display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); justify-items: center;
   background: radial-gradient(ellipse at center, color-mix(in srgb,var(--hero-color,#8bcbd9) 14%,#112937), #0c202d);
   border-inline: 1px solid #e8cf9e26; overflow: visible;
 }
@@ -50,18 +50,21 @@
   touch-action: none; user-select: none; -webkit-user-select: none;
 }
 #play-screen .player-controls>.jump { grid-row: 1; }
-#play-screen .player-controls>.cast-control { grid-row: 2; }
-#play-screen .player-controls>.duck-control { grid-row: 3; }
+#play-screen .player-controls>.dash-control { grid-row: 2; }
+#play-screen .player-controls>.cast-control { grid-row: 3; }
+#play-screen .player-controls>.duck-control { grid-row: 4; }
 #play-screen .player-controls .jump-element,
 #play-screen .player-controls .jump small,
 #play-screen .player-controls .jump strong,
 #play-screen .player-controls .duck-control small { display: none; }
 #play-screen .player-controls .jump-glyph,
 #play-screen .player-controls .duck-control>span,
-#play-screen .player-controls .cast-control>span { display: block; margin: 0; line-height: 1; font-size: 24px; color: var(--hero-color,#8bcbd9); }
+#play-screen .player-controls .cast-control>span,
+#play-screen .player-controls .dash-control>span { display: block; margin: 0; line-height: 1; font-size: 24px; color: var(--hero-color,#8bcbd9); }
 #play-screen .player-controls .jump-action,
 #play-screen .player-controls .duck-control strong,
 #play-screen .player-controls .cast-control strong,
+#play-screen .player-controls .dash-control strong,
 #online .online-controls strong { display: block; font: 600 10px/1.2 system-ui, sans-serif; }
 #play-screen .player-controls small,
 #online .online-controls small { font: 8px/1 system-ui,sans-serif; color: #b8cad1; margin: 0; }
@@ -69,7 +72,9 @@
 #online .online-controls kbd { display: none; position: absolute; top: -4px; right: -4px; margin: 0; padding: 2px 5px; border: 1px solid #e4c79466; border-radius: 6px; background: #142d3e; color: #f3dfbc; font: 9px/1.3 system-ui, sans-serif; }
 .keyboard-input #play-screen .player-controls kbd { display: block; }
 #play-screen .player-controls>.cast-control,
-#online .online-controls>.cast-control { background: linear-gradient(to top, color-mix(in srgb,var(--hero-color,#8bcbd9) 25%,#142e3d) var(--charge,100%), #102431 var(--charge,100%)) !important; }
+#play-screen .player-controls>.dash-control,
+#online .online-controls>.cast-control,
+#online .online-controls>.dash-control { background: linear-gradient(to top, color-mix(in srgb,var(--hero-color,#8bcbd9) 25%,#142e3d) var(--charge,100%), #102431 var(--charge,100%)) !important; }
 #play-screen .player-controls>button:active,
 #play-screen .player-controls>button.is-held,
 #online .online-controls>button:active,
@@ -100,10 +105,10 @@
 .solo #play-screen .player-controls.sofia,
 #online .online-controls { position: absolute; inset: auto 0 0; height: calc(var(--control-bar-height, 92px) + env(safe-area-inset-bottom)); width: 100%; padding: 8px max(20px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); display: grid; grid-template-columns: var(--control-size,76px) var(--control-size,76px) 1fr var(--control-size,76px) var(--control-size,76px); grid-template-rows: 1fr; align-items: center; gap: 12px; background: linear-gradient(#17313d,#0b202d); border: 0; border-top: 1px solid #d9bd7f66; }
 .solo #play-screen .player-controls>button { grid-row: 1; }
-.solo #play-screen .player-controls>.jump { grid-column: 1; border-radius: 27px; }
-.solo #play-screen .player-controls>.cast-control:not(.cast-mirror) { grid-column: 2; }
-.solo #play-screen .player-controls>.cast-mirror { display: flex; grid-column: 4; }
-.solo #play-screen .player-controls>.duck-control { grid-column: 5; border-radius: 27px; }
+.solo #play-screen .player-controls>.duck-control { grid-column: 1; border-radius: 27px; }
+.solo #play-screen .player-controls>.cast-control { grid-column: 2; }
+.solo #play-screen .player-controls>.dash-control { grid-column: 4; }
+.solo #play-screen .player-controls>.jump { grid-column: 5; border-radius: 27px; }
 .solo #play-screen .ready-overlay,
 .solo #play-screen .level-intro { grid-template-rows: 1fr; }
 
@@ -133,10 +138,10 @@
 #online-clock .lane-location { display: block; color: #fff0d5; }
 #online-clock .lane-timer { display: inline-block; margin-top: 4px; color: #fff0d5; }
 #online .online-controls { position: relative; }
-#online .online-controls>#online-jump { grid-column: 1; }
+#online .online-controls>#online-duck { grid-column: 1; border-radius: 27px; }
 #online .online-controls>#online-cast { grid-column: 2; }
-#online .online-controls>#online-cast-mirror { grid-column: 4; }
-#online .online-controls>#online-duck { grid-column: 5; }
+#online .online-controls>#online-dash { grid-column: 4; }
+#online .online-controls>#online-jump { grid-column: 5; border-radius: 27px; }
 #online .online-controls .action-icon { color: var(--hero-color); }
 .online-start-notice { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 8px; z-index: 2; pointer-events: none; background: #0b213835; color: #fff1d3; text-align: center; text-shadow: 0 3px 10px #0b2138; }
 .online-start-notice strong { font-size: clamp(24px,4vw,48px); }
@@ -180,8 +185,8 @@
 .solo #play-screen .arena-toolbar { right: max(12px,env(safe-area-inset-right)); }
 .hud-hit { animation: hud-hit .45s ease; }
 .hud-award { animation: hud-award .35s ease; }
-.spell-ready { animation: spell-ready .5s ease; }
+.spell-ready, .dash-ready { animation: spell-ready .5s ease; }
 @keyframes hud-hit { 50% { opacity: .35; transform: scale(1.12); } }
 @keyframes hud-award { 50% { transform: scale(1.12); color: #fff; } }
 @keyframes spell-ready { 50% { box-shadow: 0 0 24px var(--hero-color); } }
-@media (prefers-reduced-motion: reduce) { .hud-hit,.hud-award,.spell-ready { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .hud-hit,.hud-award,.spell-ready,.dash-ready { animation: none; } }

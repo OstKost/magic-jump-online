@@ -25,7 +25,7 @@ func TestCastCooldownAndLaneIsolation(t *testing.T) {
 	if e.Players[0].Score != 25 || !e.Items[1].Passed || e.Items[0].Passed || e.Items[2].Passed {
 		t.Fatalf("wrong hit: %+v", e.Items)
 	}
-	for e.Tick < 99 {
+	for e.Tick < 24 {
 		e.step()
 	}
 	e.input(Action{Player: 0, Kind: "cast"})

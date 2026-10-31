@@ -8,6 +8,9 @@ import (
 const stepMS = 20
 
 type Event struct {
+	Offset   float64 `json:"offset,omitempty"`
+	Width    float64 `json:"width,omitempty"`
+	Height   float64 `json:"height,omitempty"`
 	At       float64 `json:"at"`
 	Kind     string  `json:"kind"`
 	Variant  int     `json:"variant"`
@@ -20,19 +23,23 @@ type Action struct {
 	Pressed bool   `json:"pressed"`
 }
 type Body struct {
-	ReadyAt    int     `json:"readyAt"`
-	Lives      int     `json:"lives"`
-	Score      int     `json:"score"`
-	RoundScore int     `json:"roundScore"`
-	Y          float64 `json:"y"`
-	Velocity   float64 `json:"velocity"`
-	Duck       bool    `json:"duck"`
-	Held       bool    `json:"-"`
-	Immune     int     `json:"-"`
-	Hero       int     `json:"hero"`
-	Connected  bool    `json:"connected"`
-	Eligible   bool    `json:"eligible"`
-	Jumps      int     `json:"jumps"`
+	ReadyDashAt int     `json:"readyDashAt"`
+	DashUntil   int     `json:"dashUntil"`
+	ReadyAt     int     `json:"readyAt"`
+	Lives       int     `json:"lives"`
+	Score       int     `json:"score"`
+	RoundScore  int     `json:"roundScore"`
+	Y           float64 `json:"y"`
+	Velocity    float64 `json:"velocity"`
+	Duck        bool    `json:"duck"`
+	Held        bool    `json:"-"`
+	Immune      int     `json:"-"`
+	Hero        int     `json:"hero"`
+	Connected   bool    `json:"connected"`
+	Eligible    bool    `json:"eligible"`
+	Grounded    bool    `json:"grounded"`
+	FallUntil   int     `json:"fallUntil"`
+	Jumps       int     `json:"jumps"`
 }
 type Object struct {
 	DefeatedAt int `json:"defeatedAt"`
@@ -45,9 +52,10 @@ type Projectile struct {
 	X        float64 `json:"x"`
 	Distance float64 `json:"distance"`
 	Player   int     `json:"player"`
+	Y        float64 `json:"y"`
 }
 type Engine struct {
- World int `json:"world"`
+	World       int          `json:"world"`
 	Projectiles []Projectile `json:"projectiles"`
 	Tick        int          `json:"tick"`
 	Level       int          `json:"level"`
@@ -63,34 +71,34 @@ func scheduleWithDifficulty(seed uint32, difficulty string) []Event {
 	var out []Event
 	minInterval := 1700.
 	randInterval := 700.
-	maxAt := 55000.
+	maxAt := 54000.
 
 	if difficulty == "easy" {
 		minInterval = 1700
 		randInterval = 700
-		maxAt = 16000
+		maxAt = 14000
 	} else if difficulty == "medium" {
 		minInterval = 1450
 		randInterval = 600
-		maxAt = 36000
+		maxAt = 34000
 	} else if difficulty == "hard" {
 		minInterval = 1200
 		randInterval = 500
-		maxAt = 46000
+		maxAt = 44000
 	}
 
 	for at := 2200.; at < maxAt; at += minInterval + random()*randInterval {
 		v := int(random() * 5)
 		if v == 4 {
-			out = append(out, Event{at, "bonus", 0, "none"})
+			out = append(out, Event{At: at, Kind: "bonus", Variant: 0, Obstacle: "none"})
 		} else {
 			obstacle := "ground"
 			if v == 3 {
 				obstacle = "overhead"
 			}
-			out = append(out, Event{at, "obstacle", v % 3, obstacle})
+			out = append(out, Event{At: at, Kind: "obstacle", Variant: v % 3, Obstacle: obstacle})
 			if random() > .25 {
-				out = append(out, Event{at, "bonus", 0, obstacle})
+				out = append(out, Event{At: at, Kind: "bonus", Variant: 0, Obstacle: obstacle})
 			}
 		}
 	}
@@ -151,9 +159,28 @@ func routeWithDifficulty(seed uint32, player int, difficulty string) []Event {
 	var out []Event
 	for i, targetAt := range times {
 		block := blocks[(i+shift)%len(times)]
-		for _, e := range block {
-			e.At = targetAt
-			out = append(out, e)
+		section := (i + shift) % len(blocks)
+		if section%4 == 2 {
+			danger := []string{"puddle", "gap", "fire"}[(section/4+int(seed%3))%3]
+			out = append(out, Event{At: targetAt, Kind: "platform", Offset: -90, Width: 480, Height: 90}, Event{At: targetAt, Kind: danger, Width: 260})
+			for n := 0; n < 7; n++ {
+				out = append(out, Event{At: targetAt, Kind: "bonus", Offset: float64(-195 + n*65), Height: 125})
+			}
+		} else if section%4 == 0 {
+			for _, ev := range block {
+				if ev.Kind != "bonus" {
+					ev.At = targetAt
+					out = append(out, ev)
+				}
+			}
+			for n := 0; n < 5; n++ {
+				out = append(out, Event{At: targetAt, Kind: "bonus", Offset: float64(-120 + n*60), Height: math.Round(115 + math.Sin(float64(n)/4*math.Pi)*65)})
+			}
+		} else {
+			for _, ev := range block {
+				ev.At = targetAt
+				out = append(out, ev)
+			}
 		}
 	}
 	return out
@@ -170,7 +197,7 @@ func newEngineWithDifficulty(seed uint32, level int, heroes []int, totals []int,
 	}
 	e := &Engine{
 		Level:      level,
- World: worldOrder(seed)[level],
+		World:      worldOrder(seed)[level],
 		Difficulty: difficulty,
 		Players:    make([]Body, len(heroes)),
 		plans:      make([][]Event, len(heroes)),
@@ -197,14 +224,19 @@ func (e *Engine) input(a Action) {
 	}
 	p := &e.Players[a.Player]
 	switch a.Kind {
+	case "dash":
+		if e.Tick*stepMS >= p.ReadyDashAt {
+			p.ReadyDashAt = e.Tick*stepMS + 2000
+			p.DashUntil = e.Tick*stepMS + 240
+		}
 	case "cast":
 		if e.Tick*stepMS >= p.ReadyAt {
-			p.ReadyAt = e.Tick*stepMS + 2000
-			e.Projectiles = append(e.Projectiles, Projectile{X: 160, Player: a.Player})
+			p.ReadyAt = e.Tick*stepMS + 500
+			e.Projectiles = append(e.Projectiles, Projectile{X: 160, Player: a.Player, Y: p.Y - 30})
 		}
 	case "jump":
-		if !p.Held {
-			if p.Y >= -.1 {
+		if !p.Held && p.Y <= 0 {
+			if p.Grounded || p.Y >= -.1 {
 				p.Velocity = -650
 				p.Jumps = 1
 			} else if p.Jumps < 2 {
@@ -243,19 +275,61 @@ func (e *Engine) step() {
 	speed := []float64{270, 310, 350, 350, 350}[e.World] * speedMult
 	for i, plan := range e.plans {
 		for e.next[i] < len(plan) && plan[e.next[i]].At <= float64(elapsed) {
-			e.Items = append(e.Items, Object{Event: plan[e.next[i]], X: 1150, Player: i})
+			e.Items = append(e.Items, Object{Event: plan[e.next[i]], X: 1150 + plan[e.next[i]].Offset, Player: i})
 			e.next[i]++
 		}
 	}
 	for i := range e.Players {
 		p := &e.Players[i]
-		p.Velocity += 1900 * .02
-		p.Y = math.Min(0, p.Y+p.Velocity*.02)
-		if p.Y == 0 {
+		if p.FallUntil > elapsed {
+			p.Y = 0
+			p.Velocity = 0
+			p.Grounded = true
+			p.Duck = p.Held
+			continue
+		}
+		previous := p.Y
+		if elapsed < p.DashUntil {
+			p.Velocity = math.Min(p.Velocity, 10)
+		} else {
+			p.Velocity += 38
+		}
+		next := previous + p.Velocity*.02
+		surface := 0.
+		for _, o := range e.Items {
+			if elapsed >= p.DashUntil && o.Player == i && o.Kind == "gap" && math.Abs(o.X-speed*.02-160) < o.Width/2 {
+				surface = math.Inf(1)
+			}
+		}
+		for _, o := range e.Items {
+			if o.Player == i && o.Kind == "platform" && math.Abs(o.X-speed*.02-160) < o.Width/2 && previous <= -o.Height+.1 && next >= -o.Height && p.Velocity >= 0 {
+				surface = math.Min(surface, -o.Height)
+			}
+		}
+		p.Grounded = next >= surface && p.Velocity >= 0
+		p.Y = next
+		if p.Grounded {
+			p.Y = surface
 			p.Velocity = 0
 			p.Jumps = 0
 		}
-		p.Duck = p.Y == 0 && p.Held
+		if p.Y > 210 {
+			if p.Lives > 0 && elapsed >= p.Immune && elapsed >= p.DashUntil {
+				p.Lives--
+				p.Immune = elapsed + 1000
+			}
+			p.Y = 0
+			p.Velocity = 0
+			p.Jumps = 0
+			p.Grounded = true
+			p.FallUntil = elapsed + 600
+		}
+		if p.FallUntil > elapsed {
+			p.Y = 0
+			p.Velocity = 0
+			p.Grounded = true
+		}
+		p.Duck = p.Grounded && p.Held
 	}
 	keptShots := []Projectile{}
 	for _, shot := range e.Projectiles {
@@ -266,7 +340,7 @@ func (e *Engine) step() {
 		target := -1
 		for i := range e.Items {
 			o := &e.Items[i]
-			if o.Kind == "enemy" && !o.Passed && o.Player == shot.Player && o.X+28 >= from && o.X-28 <= shot.X+speed*.02 && (target < 0 || o.X < e.Items[target].X) {
+			if o.Kind == "enemy" && math.Abs(shot.Y+35) < 65 && !o.Passed && o.Player == shot.Player && o.X+28 >= from && o.X-28 <= shot.X+speed*.02 && (target < 0 || o.X < e.Items[target].X) {
 				target = i
 			}
 		}
@@ -300,18 +374,28 @@ func (e *Engine) step() {
 		if o.Kind == "bonus" {
 			threshold = 30
 		}
-		if !o.Passed && math.Abs(o.X-160) < threshold {
+		dashX := 160.
+		if elapsed < p.DashUntil {
+			dashX += 160 * math.Sin(math.Pow(float64(elapsed-(p.DashUntil-240))/240, .75)*math.Pi)
+		}
+		if !o.Passed && (math.Abs(o.X-160) < threshold || math.Abs(o.X-dashX) < threshold+2) {
 			if (o.Kind == "obstacle" || o.Kind == "enemy") && collision(*p, o.Obstacle) {
 				o.Passed = true
-				if p.Lives > 0 && elapsed >= p.Immune {
+				if elapsed < p.DashUntil {
+					award(15)
+				} else if p.Lives > 0 && elapsed >= p.Immune && elapsed >= p.DashUntil {
 					p.Lives--
 					p.Immune = elapsed + 1000
 				}
 			}
-			if o.Kind == "bonus" && ((o.Obstacle == "overhead" && p.Duck && p.Y == 0) || (o.Obstacle == "none" && p.Y < -130 && p.Y > -230) || (o.Obstacle == "ground" && p.Y < -35 && p.Y > -146)) {
+			if o.Kind == "bonus" && ((o.Height > 0 && math.Abs(p.Y+o.Height-35) < 42) || (o.Height == 0 && ((o.Obstacle == "overhead" && p.Duck && p.Y == 0) || (o.Obstacle == "none" && p.Y < -130 && p.Y > -230) || (o.Obstacle == "ground" && p.Y < -35 && p.Y > -146)))) {
 				award(25)
 				o.Passed = true
 			}
+		}
+		if (o.Kind == "puddle" || o.Kind == "fire") && (math.Abs(o.X-160) < o.Width/2 || math.Abs(o.X-dashX) < o.Width/2) && p.Y > -25 && p.Lives > 0 && elapsed >= p.Immune && elapsed >= p.DashUntil {
+			p.Lives--
+			p.Immune = elapsed + 1000
 		}
 		if !o.Passed && o.X < 120 {
 			if o.Kind == "obstacle" {
@@ -322,7 +406,7 @@ func (e *Engine) step() {
 	}
 	kept := e.Items[:0]
 	for _, o := range e.Items {
-		if o.X >= -50 {
+		if o.X >= -math.Max(50, o.Width) {
 			kept = append(kept, o)
 		}
 	}
@@ -338,12 +422,14 @@ func (e *Engine) allDead() bool {
 	return true
 }
 
+const journeyStages = 3
+
 func worldOrder(seed uint32) []int {
- order := []int{0,1,2,3,4}
- for i:=len(order)-1; i>1; i-- {
-  seed = seed*1664525+1013904223
-  j:=1+int(float64(seed)/4294967296*float64(i))
-  order[i],order[j]=order[j],order[i]
- }
- return order
+	order := []int{0, 1, 2, 3, 4}
+	for i := len(order) - 1; i > 1; i-- {
+		seed = seed*1664525 + 1013904223
+		j := 1 + int(float64(seed)/4294967296*float64(i))
+		order[i], order[j] = order[j], order[i]
+	}
+	return order[:journeyStages]
 }

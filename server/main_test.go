@@ -100,7 +100,11 @@ func TestRankingAllPlayersAndIdempotency(t *testing.T) {
 	}
 	s.attempts["match"] = &Attempt{Token: "secret", Count: 2, done: true}
 	request := func(body string) int {
-		r := httptest.NewRequest("POST", "/api/results", strings.NewReader(body))
+		path := "/api/results"
+		if strings.Contains(body, "offline-123") {
+			path += "/offline"
+		}
+		r := httptest.NewRequest("POST", path, strings.NewReader(body))
 		w := httptest.NewRecorder()
 		s.routes().ServeHTTP(w, r)
 		return w.Code
@@ -396,7 +400,7 @@ func TestOnlineMatchRecordsAllPlayersOnDefeat(t *testing.T) {
 
 	var count int
 	_ = s.db.QueryRow("SELECT COUNT(*) FROM results WHERE match_id='defeat-room'").Scan(&count)
-	if count != 2 {
-		t.Fatalf("expected both players recorded in results on defeat, got %d", count)
+	if count != 0 {
+		t.Fatalf("defeats must remain device-local, got %d shared rows", count)
 	}
 }

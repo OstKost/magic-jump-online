@@ -1,4 +1,4 @@
-"""Visual smoke checks for seeded five-world journeys (running Vite server)."""
+"""Visual smoke checks for seeded three-stage journeys (running Vite server)."""
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -16,7 +16,7 @@ with sync_playwright() as p:
  page.wait_for_function('qaGame.scene.scenes.length>0 && qaGame.scene.scenes[0].runners.length>0')
  page.evaluate('window.scene=qaGame.scene.scenes[0];scene.seed=42')
  seen=[]
- for stage in range(5):
+ for stage in range(3):
   page.evaluate('(stage)=>{scene.level=stage;scene.prepareLevel();}',stage)
   seen.append(page.evaluate('scene.world'))
   if page.evaluate('scene.world')>=3:
@@ -32,9 +32,9 @@ with sync_playwright() as p:
    page.evaluate("""()=>{scene.items.forEach(i=>i.icon.destroy());scene.items=[];scene.spawn({row:0,at:0,kind:'obstacle',variant:0,obstacle:'overhead'});scene.spawn({row:0,at:0,kind:'bonus',variant:0,obstacle:'ground'});scene.spawn({row:0,at:0,kind:'enemy',variant:1,obstacle:'ground'});scene.items.forEach((item,i)=>{item.x=450+i*250;item.icon.x=item.x});}""")
    page.screenshot(path=str(out/f'world-{world}-hazards.png'))
  page.evaluate('scene.finish()')
- assert 'пять миров' in page.locator('#result-description').inner_text()
- assert seen==[0,3,4,1,2],seen
+ assert 'три этапа' in page.locator('#result-description').inner_text()
+ assert seen==[0,3,4],seen
  assert not errors,errors
  assert not missing,missing
- print('Five worlds and seeded order verified; screenshots saved.',flush=True)
+ print('Three-stage navigation smoke (direct scene transitions) verified; screenshots saved.',flush=True)
  browser.close()

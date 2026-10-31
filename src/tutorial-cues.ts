@@ -21,5 +21,5 @@ export function consumeCue<T extends { x: number; cue?: TutorialCue }>(items: T[
 export function cueFrame(cue: TutorialCue, x: number, speed: number, time: number) {
   if (cue.fadingAt === undefined && x - cue.offset < 160 - speed * (cue.action === 'double' ? .3 : .1)) cue.fadingAt = time;
   const progress = cue.fadingAt === undefined ? 0 : Math.min(1, (time - cue.fadingAt) / 150);
-  return { x: x - cue.offset, bob: 4 * Math.sin(time * Math.PI * 2 / 1500), alpha: .7 * (1 - progress) };
+  return { x: x - cue.offset, bob: 4 * Math.sin(time * Math.PI * 2 / 1500), alpha: .95 * (1 - progress) };
 }

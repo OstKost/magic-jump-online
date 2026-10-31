@@ -9,6 +9,41 @@
         "obstacle": "ground"
       },
       {
+        "at": 2200,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 2200,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 2200,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 2200,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 2200,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
+      },
+      {
         "at": 4304.096838762052,
         "kind": "obstacle",
         "variant": 1,
@@ -22,9 +57,66 @@
       },
       {
         "at": 6022.061572154053,
-        "kind": "enemy",
+        "kind": "platform",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "puddle",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 6022.061572154053,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 8333.731166180223,
@@ -42,7 +134,36 @@
         "at": 10630.973072745837,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 10630.973072745837,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 10630.973072745837,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 10630.973072745837,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 10630.973072745837,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 12933.992403955199,
@@ -52,9 +173,66 @@
       },
       {
         "at": 14732.13926255703,
+        "kind": "platform",
+        "variant": 0,
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "gap",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 14732.13926255703,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 14732.13926255703,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 17079.32807460893,
@@ -72,7 +250,36 @@
         "at": 19164.68393355608,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 19164.68393355608,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 19164.68393355608,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 19164.68393355608,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 19164.68393355608,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 21045.96069115214,
@@ -82,9 +289,66 @@
       },
       {
         "at": 23321.01137735881,
-        "kind": "enemy",
+        "kind": "platform",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "fire",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 23321.01137735881,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 25347.856980306096,
@@ -96,7 +360,36 @@
         "at": 27423.95912099164,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 27423.95912099164,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 27423.95912099164,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 27423.95912099164,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 27423.95912099164,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 29715.691604069434,
@@ -112,15 +405,66 @@
       },
       {
         "at": 31825.651395739987,
-        "kind": "obstacle",
+        "kind": "platform",
         "variant": 0,
-        "obstacle": "overhead"
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "puddle",
+        "variant": 0,
+        "width": 260
       },
       {
         "at": 31825.651395739987,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "overhead"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 31825.651395739987,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 34028.68404947221,
@@ -133,6 +477,41 @@
         "kind": "enemy",
         "variant": 0,
         "obstacle": "ground"
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 36043.511044140905,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 38056.67607539799,
@@ -148,9 +527,66 @@
       },
       {
         "at": 40172.28040576447,
+        "kind": "platform",
+        "variant": 0,
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "gap",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 40172.28040576447,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 40172.28040576447,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 42144.868372776546,
@@ -168,7 +604,36 @@
         "at": 43858.22769710794,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 43858.22769710794,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 43858.22769710794,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 43858.22769710794,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 43858.22769710794,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 46176.23397749849,
@@ -178,9 +643,66 @@
       },
       {
         "at": 48011.12299668603,
+        "kind": "platform",
+        "variant": 0,
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "fire",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 48011.12299668603,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 48011.12299668603,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 50118.74905843288,
@@ -192,7 +714,36 @@
         "at": 51909.300549537875,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 51909.300549537875,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 51909.300549537875,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 51909.300549537875,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 51909.300549537875,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 53681.38146139681,
@@ -216,9 +767,66 @@
       },
       {
         "at": 4304.096838762052,
-        "kind": "enemy",
+        "kind": "platform",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "puddle",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 4304.096838762052,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 6022.061572154053,
@@ -236,7 +844,36 @@
         "at": 8333.731166180223,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 8333.731166180223,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 10630.973072745837,
@@ -246,9 +883,66 @@
       },
       {
         "at": 12933.992403955199,
+        "kind": "platform",
+        "variant": 0,
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "gap",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 12933.992403955199,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 12933.992403955199,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 14732.13926255703,
@@ -266,7 +960,36 @@
         "at": 17079.32807460893,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 17079.32807460893,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 17079.32807460893,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 17079.32807460893,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 17079.32807460893,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 19164.68393355608,
@@ -276,9 +999,66 @@
       },
       {
         "at": 21045.96069115214,
-        "kind": "enemy",
+        "kind": "platform",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "fire",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 21045.96069115214,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 23321.01137735881,
@@ -290,7 +1070,36 @@
         "at": 25347.856980306096,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 25347.856980306096,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 25347.856980306096,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 25347.856980306096,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 25347.856980306096,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 27423.95912099164,
@@ -306,15 +1115,66 @@
       },
       {
         "at": 29715.691604069434,
-        "kind": "obstacle",
+        "kind": "platform",
         "variant": 0,
-        "obstacle": "overhead"
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "puddle",
+        "variant": 0,
+        "width": 260
       },
       {
         "at": 29715.691604069434,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "overhead"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 29715.691604069434,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 31825.651395739987,
@@ -327,6 +1187,41 @@
         "kind": "enemy",
         "variant": 0,
         "obstacle": "ground"
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 34028.68404947221,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 36043.511044140905,
@@ -342,9 +1237,66 @@
       },
       {
         "at": 38056.67607539799,
+        "kind": "platform",
+        "variant": 0,
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "gap",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 38056.67607539799,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 38056.67607539799,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 40172.28040576447,
@@ -362,7 +1314,36 @@
         "at": 42144.868372776546,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "ground"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 42144.868372776546,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 42144.868372776546,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 42144.868372776546,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 42144.868372776546,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 43858.22769710794,
@@ -372,9 +1353,66 @@
       },
       {
         "at": 46176.23397749849,
+        "kind": "platform",
+        "variant": 0,
+        "offset": -90,
+        "width": 480,
+        "height": 90
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "fire",
+        "variant": 0,
+        "width": 260
+      },
+      {
+        "at": 46176.23397749849,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -195,
+        "height": 125
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -130,
+        "height": 125
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -65,
+        "height": 125
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 125
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 65,
+        "height": 125
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 130,
+        "height": 125
+      },
+      {
+        "at": 46176.23397749849,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 195,
+        "height": 125
       },
       {
         "at": 48011.12299668603,
@@ -386,7 +1424,36 @@
         "at": 50118.74905843288,
         "kind": "bonus",
         "variant": 0,
-        "obstacle": "none"
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 50118.74905843288,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 50118.74905843288,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 50118.74905843288,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 50118.74905843288,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       },
       {
         "at": 51909.300549537875,
@@ -399,6 +1466,41 @@
         "kind": "enemy",
         "variant": 1,
         "obstacle": "ground"
+      },
+      {
+        "at": 53681.38146139681,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -120,
+        "height": 115
+      },
+      {
+        "at": 53681.38146139681,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": -60,
+        "height": 161
+      },
+      {
+        "at": 53681.38146139681,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 0,
+        "height": 180
+      },
+      {
+        "at": 53681.38146139681,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 60,
+        "height": 161
+      },
+      {
+        "at": 53681.38146139681,
+        "kind": "bonus",
+        "variant": 0,
+        "offset": 120,
+        "height": 115
       }
     ]
   ],
@@ -1157,15 +2259,37 @@
   "players": [
     {
       "lives": 0,
-      "score": 183,
-      "roundScore": 183,
-      "invulnerable": 23740
+      "score": 853,
+      "roundScore": 853,
+      "y": -96.72,
+      "velocity": -194,
+      "duck": false,
+      "held": false,
+      "immune": 19380,
+      "readyAt": 59900,
+      "readyDashAt": 0,
+      "dashUntil": 0,
+      "jumps": 1,
+      "dashActive": false,
+      "grounded": false,
+      "fallUntil": 18980
     },
     {
       "lives": 0,
       "score": 28,
       "roundScore": 28,
-      "invulnerable": 12900
+      "y": 0,
+      "velocity": 0,
+      "duck": false,
+      "held": false,
+      "immune": 12880,
+      "readyAt": 0,
+      "readyDashAt": 0,
+      "dashUntil": 0,
+      "jumps": 0,
+      "dashActive": false,
+      "grounded": true,
+      "fallUntil": 42300
     }
   ]
 }

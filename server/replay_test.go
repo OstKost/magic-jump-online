@@ -9,17 +9,20 @@ import (
 )
 
 func winningLogs(seed uint32) [][]Action {
-	logs := make([][]Action, 5)
-	for level := 0; level < 5; level++ {
+	logs := make([][]Action, journeyStages)
+	for level := 0; level < journeyStages; level++ {
 		e := newEngine(seed, level, []int{0}, nil)
 		logs[level] = []Action{}
 		for e.Tick < 3000 {
 			nearest := 2000.
 			obstacle := ""
 			for _, o := range e.Items {
-				if (o.Kind == "obstacle" || o.Kind == "enemy") && !o.Passed && o.X >= 120 && o.X < nearest {
+				if (o.Kind == "obstacle" || o.Kind == "enemy" || o.Kind == "platform") && !o.Passed && o.X >= 120 && o.X < nearest {
 					nearest = o.X
 					obstacle = o.Obstacle
+					if o.Kind == "platform" {
+						obstacle = "platform"
+					}
 				}
 			}
 			held := obstacle == "overhead" && nearest < 330
@@ -28,7 +31,7 @@ func winningLogs(seed uint32) [][]Action {
 				e.input(a)
 				logs[level] = append(logs[level], a)
 			}
-			if obstacle == "ground" && nearest < 245 && e.Players[0].Y == 0 {
+			if ((obstacle == "ground" && nearest < 245) || (obstacle == "platform" && nearest < 500)) && e.Players[0].Y == 0 {
 				a := Action{Tick: e.Tick, Player: 0, Kind: "jump", Pressed: true}
 				e.input(a)
 				logs[level] = append(logs[level], a)

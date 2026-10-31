@@ -30,7 +30,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install playwright && playwright install --with-deps chromium
+      - run: pip install playwright pillow && playwright install --with-deps chromium
+      - run: python scripts/check_obstacle_animations.py
       - run: python scripts/qa_pwa_updates.py
       - name: Browser smoke
         run: |
@@ -38,6 +39,7 @@ jobs:
           npm run dev > /tmp/jump-vite.log 2>&1 &
           for n in $(seq 1 60); do curl -fsS http://localhost:5173/api/health && break || sleep 1; done
           python scripts/qa_modes.py
+          python scripts/qa_obstacle_animations.py
           python scripts/qa_player_windows.py
           python scripts/qa_online_windows.py
           python scripts/qa_two_layout.py

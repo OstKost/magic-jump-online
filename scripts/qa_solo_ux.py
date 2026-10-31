@@ -14,7 +14,7 @@ with sync_playwright() as p:
  for w,h in [(667,375),(844,390),(932,430),(1440,900)]:
   page.set_viewport_size({'width':w,'height':h});page.wait_for_timeout(250)
   assert page.evaluate('Math.abs(scene.ground(0)-scene.scale.height*.92)<1')
-  for sel in ['[data-jump="0"]','[data-duck="0"]','[data-cast="0"]','.cast-mirror','#pause']:
+  for sel in ['[data-jump="0"]','[data-duck="0"]','[data-cast="0"]','[data-dash="0"]','#pause']:
    r=page.locator(sel).first.bounding_box();assert r and r['x']>=0 and r['y']>=0 and r['x']+r['width']<=w and r['y']+r['height']<=h,(sel,r)
   page.screenshot(path=str(out/f'solo-ux-{w}.png'))
  page.set_viewport_size({'width':844,'height':390});page.wait_for_timeout(200)

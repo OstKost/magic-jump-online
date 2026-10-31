@@ -11,7 +11,7 @@ with sync_playwright() as p:
   page.route('https://fonts.gstatic.com/**',lambda route:route.abort())
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(os.environ.get('JOURNEY_QA_URL','http://localhost:5173'),wait_until='domcontentloaded')
-  page.evaluate("async()=>{const {game}=await import('/src/main.ts');window.qaGame=game}")
+  page.evaluate("async()=>{const {game}=await import(document.querySelector('script[src*=\\"/src/main.ts\\"]').src);window.qaGame=game}")
   page.wait_for_function('window.qaGame?.scene.scenes[0]?.textures?.exists("sofia")')
   page.evaluate("window.scene=qaGame.scene.scenes[0]")
   page.wait_for_timeout(2000)

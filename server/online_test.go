@@ -79,7 +79,7 @@ func TestOnlineMatchAwardsOnlyEligibleWinner(t *testing.T) {
 	}
 	s.mu.Lock()
 	r := s.rooms[first["code"]]
-	r.Engine.Level = 4
+	r.Engine.Level = journeyStages - 1
 	r.Engine.Tick = 2999
 	r.Engine.Players[0].Score = 500
 	r.Engine.Players[1].Score = 600
@@ -91,7 +91,7 @@ func TestOnlineMatchAwardsOnlyEligibleWinner(t *testing.T) {
 	go s.loop(stop)
 	for {
 		s.mu.Lock()
-		finished := r.Phase == "finished"
+		finished := r.Phase == "finished" && r.Persistence == "saved"
 		s.mu.Unlock()
 		if finished {
 			break

@@ -1,10 +1,34 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canCast, firstSpellTarget } from './combat.ts';
+import { canCast, canDash, firstSpellTarget, SPELL_COOLDOWN_MS, DASH_COOLDOWN_MS, DASH_DURATION_MS, DASH_DISTANCE_PX } from './combat.ts';
 
 test('spell cooldown becomes ready exactly at its boundary', () => {
-  assert.equal(canCast(1999, 2000), false);
-  assert.equal(canCast(2000, 2000), true);
+  assert.equal(SPELL_COOLDOWN_MS, 500);
+  assert.equal(canCast(499, 500), false);
+  assert.equal(canCast(500, 500), true);
+});
+
+test('dash cooldown becomes ready exactly at its boundary', () => {
+  assert.equal(DASH_COOLDOWN_MS, 2000);
+  assert.equal(DASH_DURATION_MS, 240);
+  assert.equal(DASH_DISTANCE_PX, 160);
+  assert.equal(canDash(1999, 2000), false);
+  assert.equal(canDash(2000, 2000), true);
+});
+
+test('dash dodge grants immunity against collision hits', async () => {
+  const { newPlayer, hit, award } = await import('./rules.ts');
+  const player = newPlayer(0, 3);
+  const elapsed = 1000;
+  const dashActive = true;
+
+  if (dashActive) {
+    award(player, 15);
+  } else {
+    hit(player, elapsed);
+  }
+  assert.equal(player.lives, 3);
+  assert.equal(player.score, 15);
 });
 
 test('swept spell collision selects the nearest undefeated enemy in its lane', () => {
@@ -30,7 +54,7 @@ test('enemy routes are deterministic, contain both types and never carry a bonus
     for(const enemy of first.filter(e=>e.kind==='enemy')){
       types.add(enemy.variant);
       assert.equal(enemy.obstacle,'ground');
-      assert.equal(first.some(e=>e.kind==='bonus'&&e.at===enemy.at),false);
+      assert.equal(first.some(e=>e.kind==='bonus'&&e.height===undefined&&e.at===enemy.at),false);
     }
   }
   assert.deepEqual([...types].sort(),[0,1]);

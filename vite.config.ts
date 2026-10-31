@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 export default defineConfig({
-  server: { proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
+  server: { watch: { ignored: ['**/artifacts/**'] }, proxy: { '/api': { target: 'http://127.0.0.1:8080', ws: true } } },
   plugins: [{
     name: 'version-service-worker',
     apply: 'build',

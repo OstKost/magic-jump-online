@@ -274,8 +274,7 @@ export const animationData = {
     "fps": 8,
     "count": 8,
     "defeatStart": null,
-    "sourceMode": "generated",
-    "reusedFrom": "overhead-3-0"
+    "sourceMode": "generated"
   },
   "overhead-4-0": {
     "path": "/assets/animated/overhead-4-0.png",
@@ -311,7 +310,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-archer": {
     "path": "/assets/animated/enemy-archer.png",
@@ -323,7 +322,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-gingerbread": {
     "path": "/assets/animated/enemy-gingerbread.png",
@@ -335,7 +334,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-slime": {
     "path": "/assets/animated/enemy-slime.png",
@@ -347,7 +346,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-robot": {
     "path": "/assets/animated/enemy-robot.png",
@@ -359,7 +358,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-alien": {
     "path": "/assets/animated/enemy-alien.png",
@@ -371,7 +370,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-kikimora": {
     "path": "/assets/animated/enemy-kikimora.png",
@@ -383,7 +382,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-vodyanoy": {
     "path": "/assets/animated/enemy-vodyanoy.png",
@@ -395,7 +394,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-sandworm": {
     "path": "/assets/animated/enemy-sandworm.png",
@@ -407,7 +406,7 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   },
   "enemy-desert-guard": {
     "path": "/assets/animated/enemy-desert-guard.png",
@@ -419,6 +418,6 @@ export const animationData = {
     "fps": 6,
     "count": 8,
     "defeatStart": 8,
-    "sourceMode": "existing"
+    "sourceMode": "generated"
   }
 } as const;

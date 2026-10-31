@@ -24,8 +24,8 @@ with sync_playwright() as playwright:
         page.locator('[data-difficulty="easy"]').click()
         page.locator('#confirm-character').click()
         page.locator('[data-ready="0"]').click()
-        page.evaluate('''async()=>{const {game}=await import(document.querySelector('script[src*="/src/main.ts"]').src);window.scene=game.scene.scenes[0];}''')
-        page.wait_for_function('scene.playing&&scene.runners.length===1')
+        page.evaluate('''async()=>{const {game}=await import(document.querySelector('script[src*="/src/main.ts"]').src);window.gameForQa=game;window.scene=game.scene.scenes[0];}''')
+        page.wait_for_function('()=>{window.scene=window.gameForQa.scene.scenes[0];return !!scene?.playing&&scene.runners.length===1;}')
         page.evaluate('''()=>{scene.paused=true;scene.plan=[];scene.players[0].invulnerable=1e9;}''')
         for world in range(5):
             for kind in ['ground', 'overhead', 'enemy']:

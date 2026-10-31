@@ -119,8 +119,14 @@ Active enemies now use `enemies/{key}-v2.png`: seven 192 × 192 frames, origin (
 
 Music and elemental sounds are original procedural Web Audio compositions in `src/audio.ts`, requiring no recorded third-party assets. Five eight-note world motifs, independent persisted music/effects settings, gesture unlock, bounded polyphony and bonus throttling.
 
-## Obstacle animation release v1.1.0
+## Obstacle animation release v1.1.0 (historical)
 
 Shared padded atlases live in `animated/`; both renderers use `src/obstacle-animation-data.ts` and game-time frame selection. Each idle loop contains four authored poses played as eight phases (0,1,2,3,3,2,1,0), at 8 fps for obstacles and 6 fps for enemies. Enemy defeat frames 8–10 retain the previous artwork and timing. Packed cells include 8 px padding per side and at least 4 px of fully transparent outer gutter. Registration uses the static lower support and one common scale per cycle.
 
 ImageGen sources and prompts are retained outside the public bundle in `pics/obstacle-animations/`. Reproduce this intermediate release with `python scripts/prepare_obstacle_animations.py --existing-enemies` (Pillow required); validate with `python scripts/check_obstacle_animations.py`. All enemy idle poses currently come from the previous reviewed sheets. The incomplete root arch temporarily reuses the complete wooden arch. Remaining generation and clearance review are tracked in [the next-iteration plan](../../docs/obstacle-animation-next-iteration.md).
+
+## Obstacle animation release v1.2.0
+
+All 35 atlas entries now use retained ImageGen sources, including new ready poses for all ten enemies. Three original defeat frames remain unchanged. The root arch is a complete independent asset; temporary old-enemy and wooden-arch substitutions have been removed. Sakura/lantern, pine/crane, candy tree/sweet, and antenna/drone sources have been revised for higher hanging details.
+
+Rebuild the current set with `python scripts/prepare_obstacle_animations.py`; the old `--existing-enemies` flag is no longer supported. New sources use 2×2 pose grids described by sibling `*.layout.json`; legacy sources default to 4×2. The common four-pose forward/backward playback, padded cell dimensions and origins are preserved. Original attempts remain as versioned source PNGs/prompts. Current status, checks and further real-device review are recorded in [the iteration document](../../docs/obstacle-animation-next-iteration.md).

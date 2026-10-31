@@ -16,6 +16,8 @@ export function drawTerrain(c: CanvasRenderingContext2D, kind: string, width: nu
     c.fillStyle=`rgb(${23+Math.round(wave*2)},${39+Math.round(wave*3)},${52+Math.round(wave*4)})`;c.beginPath();c.moveTo(-width/2,-2);
     for(let x=-width/2;x<=width/2;x+=20)c.lineTo(x,4+Math.sin(x)*5);
     c.lineTo(width/2,42);c.lineTo(-width/2,42);c.closePath();c.fill();
+    // The interior shadow moves softly while the rim stays fixed.
+    c.save();c.clip();c.fillStyle='rgba(7,15,24,.22)';c.beginPath();c.ellipse(wave*width*.07,23,width*.32,12+wave,0,0,Math.PI*2);c.fill();c.restore();
     c.strokeStyle='#64717a';c.lineWidth=4;c.beginPath();c.moveTo(-width/2,-3);c.lineTo(-width/2+12,24);c.moveTo(width/2,-3);c.lineTo(width/2-12,24);c.stroke();
   }else if(kind==='puddle'){
     c.fillStyle='#287598';c.beginPath();c.ellipse(0,7,width/2,13,0,0,Math.PI*2);c.fill();

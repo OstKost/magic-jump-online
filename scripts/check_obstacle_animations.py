@@ -11,6 +11,7 @@ sw = (ROOT / 'public/sw.js').read_text()
 for item in items:
     key = item['key']
     entry = registry[key]
+    assert entry['sourceMode'] == 'generated' and 'reusedFrom' not in entry, f'{key}: temporary artwork fallback remains'
     image = Image.open(ROOT / 'public' / entry['path'].lstrip('/')).convert('RGBA')
     width, height = entry['width'], entry['height']
     count = 11 if item['kind'] == 'enemy' else 8

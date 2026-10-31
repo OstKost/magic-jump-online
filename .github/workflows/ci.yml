@@ -38,6 +38,10 @@ jobs:
           npm run dev > /tmp/jump-vite.log 2>&1 &
           for n in $(seq 1 60); do curl -fsS http://localhost:5173/api/health && break || sleep 1; done
           python scripts/qa_modes.py
+          python scripts/qa_player_windows.py
+          python scripts/qa_online_windows.py
+          python scripts/qa_two_layout.py
+          python scripts/qa_solo_ux.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

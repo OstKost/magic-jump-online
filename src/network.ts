@@ -1,6 +1,7 @@
 import { ENEMIES, SPELLS } from './combat';
 import { drawSpell } from './combat-art';
 import './online.css';
+import { actionIcon, castButtonContent } from './game-controls';
 import QRCode from 'qrcode';
 import { CHARACTERS, portraitMarkup, petMarkup } from './characters';
 import { WORLDS, DIFFICULTIES, type DifficultyKey } from './rules';
@@ -66,7 +67,7 @@ export function mountNetwork(show:(id:string)=>void){
     <div class="online-party"><div class="online-party-heading"><div><span class="eyebrow">СОБЕРИТЕ СВОЮ КОМАНДУ</span><h2 id="lobby-title">Выберите свою стихию</h2></div><span id="room-count" class="room-count"></span></div><div id="online-difficulty-picker" class="online-difficulty-picker" role="group" aria-label="Сложность игры"><div class="difficulty-picker-header"><span class="difficulty-picker-label">Сложность приключения</span><span id="online-diff-hint" class="online-diff-hint"></span></div><div class="online-difficulty-tabs"><button type="button" class="online-diff-btn" data-online-diff="easy"><span class="diff-icon">🌸</span><strong>Лёгкий</strong><small>20 сек · 4 жизни</small></button><button type="button" class="online-diff-btn is-active" data-online-diff="medium"><span class="diff-icon">⭐</span><strong>Средний</strong><small>40 сек · 3 жизни</small></button><button type="button" class="online-diff-btn" data-online-diff="hard"><span class="diff-icon">🔥</span><strong>Сложный</strong><small>50 сек · 3 жизни</small></button></div></div><p id="hero-choice-hint" class="hero-choice-hint">Выбирайте любого героя — даже если друг уже играет им.</p><div id="online-hero-picker" class="online-hero-picker" role="group" aria-label="Выбор персонажа"></div><div id="online-members" aria-label="Участники комнаты"></div><footer class="lobby-actions"><p id="lobby-guidance" role="status"></p><button id="online-ready" class="primary">Я готов <span aria-hidden="true">✓</span></button><button id="online-start" class="primary">Начать игру <span aria-hidden="true">→</span></button></footer></div>
    </div>
   </div>
-  <div id="online-match" hidden><div id="online-clock"></div><div id="opponent-lanes"></div><div id="own-lane"></div><div class="online-controls"><button id="online-cast" class="cast-control" aria-label="Заклинание">✦ Заклинание · D / →</button><button id="online-duck" class="primary">↓ Присед</button><button id="online-jump" class="primary">↑ Прыжок</button></div></div>
+  <div id="online-match" hidden><div id="online-clock"></div><div id="opponent-lanes" aria-label="Экраны друзей"></div><div id="own-lane"></div><div class="online-controls" aria-label="Управление вашим героем"><button id="online-jump" aria-label="Прыжок">${actionIcon('jump')}<strong>Прыжок</strong><kbd>W / ↑</kbd></button><button id="online-cast" class="cast-control" aria-label="Заклинание">${castButtonContent('D / →')}</button><button id="online-cast-mirror" class="cast-control" aria-label="Заклинание">${castButtonContent('D / →')}</button><button id="online-duck" aria-label="Присесть, удерживайте">${actionIcon('duck')}<strong>Присесть</strong><kbd>S / ↓</kbd></button></div></div>
   <div id="online-result" hidden></div>
  </section>
  <section id="ranking" class="screen panel ranking-screen" hidden>
@@ -89,17 +90,83 @@ export function mountNetwork(show:(id:string)=>void){
  for(const hero of CHARACTERS){const atlas=hero.clean?'atlas-elemental':'atlas';loadImage(`/assets/characters/${hero.key}/${atlas}.png`);void fetch(`/assets/characters/${hero.key}/${atlas}.json`).then(r=>r.json()).then(data=>atlases.set(hero.key,data.frames)).catch(()=>{});loadImage(`/assets/pets/${hero.petRest}.png`)}
  for(const key of ['rock','stakes','log'])loadImage(`/assets/obstacles/${key}.png`);
  function transmit(type:string,extra:object={}){if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({type,...extra}));if(type==='jump'&&room?.phase==='playing'&&room.engine){const me=room.members.findIndex(m=>m.id===session?.id);const p=room.engine.players[me];if(p&&!p.duck){if(p.y===0){p.velocity=-612;p.y=-12.24;p.jumps=1;}else if((p.jumps||0)<2){p.velocity=-612;p.jumps=2;}}}}}
- function clearControls(){transmit('duck',{pressed:false})}
- function disconnect(){closed=true;window.clearTimeout(retry);window.clearInterval(heartbeat);clearControls();transmit('leave');ws?.close();session=undefined;room=undefined;sessionStorage.removeItem('jump-room');canvases.clear();previousSignature='';qrCode='';}
- function connect(){if(!session||closed)return;ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/api/rooms/${session.code}/ws`,'jump-v1');
-  ws.onopen=()=>{ws!.send(JSON.stringify({token:session!.token}));el('connection-status').textContent='Подключено';window.clearInterval(heartbeat);heartbeat=window.setInterval(()=>transmit('ping'),15000)};
-  ws.onmessage=e=>{const next=JSON.parse(e.data) as Room;room=next;lastTick=next.engine?.tick??0;lastReceived=performance.now();render()};
-  ws.onclose=e=>{window.clearInterval(heartbeat);if(e.code===1008){disconnect();el('room-entry').hidden=false;el('lobby').hidden=true;el('online-match').hidden=true;el('online-error').textContent='Сессия истекла. Создайте новую комнату или введите код.';return}if(!closed){el('connection-status').textContent='Связь потеряна · подключаемся…';retry=window.setTimeout(connect,1200)}};
-  ws.onerror=()=>{el('connection-status').textContent='Нет связи с сервером'};
+ let entering = false, entryVersion = 0, entryTimer: number | undefined;
+ let pendingLobby: { accepts: (next: Room) => boolean; timer: number } | undefined;
+ let lobbyConnected = false;
+ function entryBusy(busy: boolean){
+  entering = busy;
+  el<HTMLButtonElement>('create-room').disabled = busy;
+  el<HTMLButtonElement>('room-code').disabled = busy;
+  el<HTMLFormElement>('join-room').querySelector('button')!.disabled = busy;
+  el('room-entry').setAttribute('aria-busy', String(busy));
+  el('connection-status').classList.toggle('request-loading', busy);
  }
- async function enter(path:string){el('online-error').textContent='';el<HTMLButtonElement>('create-room').disabled=true;el<HTMLFormElement>('join-room').querySelector('button')!.disabled=true;el('connection-status').textContent='Открываем путь…';try{disconnect();session=await api<Session>(path,{});sessionStorage.setItem('jump-room',JSON.stringify(session));closed=false;finishedID='';connect();el('room-entry').hidden=true;}catch(err){el('room-entry').hidden=false;el('online-error').textContent=String(err);el('connection-status').textContent='';}finally{el<HTMLButtonElement>('create-room').disabled=false;el<HTMLFormElement>('join-room').querySelector('button')!.disabled=false;}}
+ function clearLobbyPending(){
+  if(pendingLobby)window.clearTimeout(pendingLobby.timer);
+  pendingLobby = undefined;
+  previousSignature = '';
+ }
+ function lobbyBusy(){
+  const busy = !!pendingLobby || !lobbyConnected;
+  if(busy){
+   el('lobby').querySelectorAll<HTMLButtonElement>('#online-hero-picker button, #online-difficulty-picker button, #online-ready, #online-start').forEach(button => { button.disabled = true; });
+   el('lobby-guidance').textContent = pendingLobby ? 'Ждём подтверждения…' : 'Ждём подключения…';
+  }
+  el('lobby').setAttribute('aria-busy', String(busy));
+  el('lobby-guidance').classList.toggle('request-loading', busy);
+ }
+ function lobbyAction(type: string, extra: object, accepts: (next: Room) => boolean){
+  if(pendingLobby || !lobbyConnected || ws?.readyState !== WebSocket.OPEN)return;
+  el('online-error').textContent = '';
+  pendingLobby = { accepts, timer: window.setTimeout(() => {
+   clearLobbyPending();
+   el('online-error').textContent = 'Нет подтверждения от сервера. Попробуйте ещё раз.';
+   render();lobbyBusy();
+  }, 12000) };
+  transmit(type, extra);
+  lobbyBusy();
+ }
+ function clearControls(){transmit('duck',{pressed:false})}
+ function disconnect(){el('online').classList.remove('is-match');root.classList.remove('is-online-playing');entryVersion++;window.clearTimeout(entryTimer);entryBusy(false);clearLobbyPending();lobbyConnected=false;closed=true;window.clearTimeout(retry);window.clearInterval(heartbeat);clearControls();transmit('leave');ws?.close();session=undefined;room=undefined;sessionStorage.removeItem('jump-room');canvases.clear();previousSignature='';qrCode='';}
+ function connect(){if(!session||closed)return;const socket=ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/api/rooms/${session.code}/ws`,'jump-v1');
+  ws.onopen=()=>{if(ws!==socket||closed)return;ws!.send(JSON.stringify({token:session!.token}));el('connection-status').textContent='Подключаемся к комнате…';window.clearInterval(heartbeat);heartbeat=window.setInterval(()=>transmit('ping'),15000)};
+  ws.onmessage=e=>{if(ws!==socket||closed)return;const next=JSON.parse(e.data) as Room;
+   if(!lobbyConnected)previousSignature='';
+   lobbyConnected=true;window.clearTimeout(entryTimer);entryBusy(false);
+   el('connection-status').textContent='Подключено';
+   if(pendingLobby?.accepts(next))clearLobbyPending();
+   room=next;lastTick=next.engine?.tick??0;lastReceived=performance.now();render();lobbyBusy()};
+  ws.onclose=e=>{if(ws!==socket||closed)return;window.clearInterval(heartbeat);lobbyConnected=false;clearLobbyPending();render();lobbyBusy();if(e.code===1008){disconnect();el('room-entry').hidden=false;el('lobby').hidden=true;el('online-match').hidden=true;el('online-error').textContent='Сессия истекла. Создайте новую комнату или введите код.';return}if(!closed){el('connection-status').textContent='Связь потеряна · подключаемся…';retry=window.setTimeout(connect,1200)}};
+  ws.onerror=()=>{if(ws!==socket||closed)return;el('connection-status').textContent='Нет связи с сервером'};
+ }
+ async function enter(path:string){
+  if(entering)return;
+  disconnect();
+  const version = entryVersion;
+  entryBusy(true);
+  el('online-error').textContent='';
+  el('connection-status').textContent='Открываем путь…';
+  try{
+   const next = await api<Session>(path,{});
+   if(version !== entryVersion)return;
+   session=next;sessionStorage.setItem('jump-room',JSON.stringify(session));
+   closed=false;finishedID='';
+   entryTimer=window.setTimeout(()=>{
+    disconnect();el('room-entry').hidden=false;
+    el('connection-status').textContent='';
+    el('online-error').textContent='Не удалось подключиться к комнате. Попробуйте ещё раз.';
+   },12000);
+   connect();
+  }catch(err){
+   if(version !== entryVersion)return;
+   disconnect();el('room-entry').hidden=false;
+   el('online-error').textContent=String(err);el('connection-status').textContent='';
+  }
+ }
+
  function render(){if(!room||!session)return;const me=room.members.findIndex(m=>m.id===session!.id);if(me<0){disconnect();el('room-entry').hidden=false;el('lobby').hidden=true;el('online-error').textContent='Время возвращения истекло. Войдите в новую комнату.';return}
   el('room-entry').hidden=true;const playing=room.phase==='playing';el('lobby').hidden=playing||room.phase==='finished';el('online-match').hidden=!playing;el('online-result').hidden=room.phase!=='finished';
+  el('online').classList.toggle('is-match',playing);root.classList.toggle('is-online-playing',playing);
   el('invite-code').textContent=room.code;el('lobby-title').textContent=room.phase==='failed'?'Ещё одна попытка?':room.phase==='between'?`Впереди — мир ${room.engine!.level+2}`:'Выберите свою стихию';el('online-start').textContent=room.phase==='failed'?'Повторить уровень':room.phase==='between'?'Следующий уровень':'Начать игру';
   const host=room.host===session.id;
   const currentDiff: DifficultyKey=(room.difficulty as DifficultyKey)||'medium';
@@ -137,7 +204,39 @@ export function mountNetwork(show:(id:string)=>void){
    el<HTMLButtonElement>('online-ready').disabled=mine.ready||!mine.connected;el('online-ready').textContent=mine.ready?'✓ Вы готовы':'Я готов ✓';el('online-start').hidden=!host;el<HTMLButtonElement>('online-start').disabled=!allReady;
    el('lobby-guidance').textContent=room.members.length<2?'Позовите хотя бы одного друга':!allReady?'Когда все будут готовы, начнём приключение':host?'Команда в сборе. Можно отправляться!':'Команда готова. Ждём старта от создателя комнаты';
   }
-  if(playing&&room.engine){const key=session.id+room.members.map(m=>m.id).join(',');if(el('own-lane').dataset.key!==key){el('own-lane').dataset.key=key;canvases.clear();el('own-lane').replaceChildren();el('opponent-lanes').replaceChildren();room.members.forEach((_,i)=>{const canvas=document.createElement('canvas');canvas.width=1100;canvas.height=240;canvas.setAttribute('aria-label',`Дорожка игрока ${i+1}`);canvases.set(i,canvas);if(i===me){const label=document.createElement('p');label.id=`remote-label-${i}`;el('own-lane').append(label,canvas);}else{const card=document.createElement('div');card.className='remote-lane';const label=document.createElement('p');label.id=`remote-label-${i}`;card.append(label,canvas);el('opponent-lanes').append(card)}})}room.engine.players.forEach((p,i)=>{const label=document.getElementById(`remote-label-${i}`);if(label)label.textContent=`${i===me?'Вы':`Игрок ${i+1}`} · ${CHARACTERS[p.hero].name} · ${p.lives===0?'👻':'♥'.repeat(p.lives)} · ${p.score}`});const diff=(room.difficulty as DifficultyKey)||'medium';const cfg=DIFFICULTIES[diff]||DIFFICULTIES.medium;const totalTicks=cfg.levelSeconds*50;const remSec=Math.max(0,Math.ceil((totalTicks-room.engine.tick)/50));el('online-clock').textContent=`Уровень ${room.engine.level+1} · ${WORLDS[room.engine.level].name} · ${cfg.name} · ${remSec} сек.`}
+  if(playing&&room.engine){
+    const key=session.id+room.members.map(m=>m.id).join(',');
+    if(el('own-lane').dataset.key!==key){
+      el('own-lane').dataset.key=key;canvases.clear();el('own-lane').replaceChildren();el('opponent-lanes').replaceChildren();
+      room.members.forEach((_,i)=>{
+        const canvas=document.createElement('canvas');canvas.width=1100;canvas.height=300;canvas.setAttribute('aria-label',`Дорожка игрока ${i+1}`);canvases.set(i,canvas);
+        if(i===me){
+          const hud=document.createElement('div');hud.className='online-hud';hud.id=`remote-label-${i}`;
+          hud.innerHTML=`${portraitMarkup(CHARACTERS[room!.engine!.players[i].hero])}<div><strong></strong><span class="online-lives"></span></div><b>0<small>очков</small></b>`;
+          const notice=document.createElement('div');notice.className='online-start-notice';notice.innerHTML='<strong></strong><span>Вперёд, вместе!</span>';
+          el('own-lane').append(canvas,hud,notice);
+        }else{
+          const card=document.createElement('div');card.className='remote-lane';const label=document.createElement('p');label.id=`remote-label-${i}`;card.append(label,canvas);el('opponent-lanes').append(card);
+        }
+      });
+    }
+    const cfg=DIFFICULTIES[room.difficulty||'medium'];
+    const remSec=Math.max(0,Math.ceil((cfg.levelSeconds*50-room.engine.tick)/50));
+    const world=WORLDS[room.engine.world];
+    el('online-clock').innerHTML=`<span class="lane-location">${world.name}</span><span class="lane-timer">${String(Math.floor(remSec/60)).padStart(2,'0')}:${String(remSec%60).padStart(2,'0')}</span>`;
+    room.engine.players.forEach((p,i)=>{
+      const label=document.getElementById(`remote-label-${i}`);if(!label)return;
+      const lives=p.lives===0?'👻 Призрак':'♥'.repeat(p.lives)+'♡'.repeat(Math.max(0,cfg.lives-p.lives));
+      if(i===me){
+        label.querySelector('strong')!.textContent=CHARACTERS[p.hero].name;
+        label.querySelector('.online-lives')!.textContent=lives;
+        label.querySelector('b')!.innerHTML=`${p.score}<small>очков</small>`;
+        el('online-match').style.setProperty('--hero-color',CHARACTERS[p.hero].color);
+        const notice=el('own-lane').querySelector<HTMLElement>('.online-start-notice')!;
+        notice.hidden=room!.engine!.tick>80;notice.querySelector('strong')!.textContent=world.name;
+      }else label.textContent=`${CHARACTERS[p.hero].name} · ${lives} · ${p.score}${p.connected?'':' · нет связи'}`;
+    });
+  }
   if(room.phase==='finished'&&room.engine&&finishedID!==room.id){
     finishedID=room.id;
     const target=el('online-result');
@@ -173,7 +272,7 @@ export function mountNetwork(show:(id:string)=>void){
           ${portraitMarkup(hero)}
           <div class="score-card-names">
             <strong>${isYou?'Вы':`Игрок ${i+1}`} · ${hero.name}</strong>
-            <span class="score-card-status">${p.lives===0?'👻 Погиб':`${p.lives} ♥`}${isWinner?' · 👑 Победитель':''}</span>
+            <span class="score-card-status">${p.lives===0?'👻 Без сознания':`${p.lives} ♥`}${isWinner?' · 👑 Победитель':''}</span>
           </div>
         </div>
         <div class="score-card-points">
@@ -283,29 +382,96 @@ export function mountNetwork(show:(id:string)=>void){
     target.append(footer);
   }
  }
- function draw(now:number){requestAnimationFrame(draw);if(el('online').hidden||room?.phase!=='playing'||!room.engine)return;const engine=room.engine;const diff=(room.difficulty as DifficultyKey)||'medium';const cfg=DIFFICULTIES[diff]||DIFFICULTIES.medium;const speedMult=cfg.speedMultiplier;const extrapolation=Math.min((now-lastReceived)/1000,.06);for(const [i,canvas] of canvases){const c=canvas.getContext('2d')!;const p=engine.players[i];if(!p)continue;const level=engine.world;const floor=222;const colors=['#736653','#e8b1c4','#66628e','#384633','#b77e40'];const panorama=loadImage(`/art/level-${level+1}-bg.png`);c.fillStyle=['#73a1df','#5096d2','#071646','#66977c','#edbd68'][level];c.fillRect(0,0,1100,240);if(panorama.complete&&panorama.naturalWidth){const surface=[570,540,575,535,518][level];const time=engine.tick*.02;const departure=level===0?180*(1-Math.pow(1-Math.min(1,time/2.5),3)):0;const paint=(sourceY:number,sourceHeight:number,y:number,height:number,offset:number)=>{const shift=offset%2200;for(let tile=-1;tile<3;tile++){c.save();c.translate(tile*1100-shift+(tile%2!==0?1100:0),0);c.scale(tile%2!==0?-1:1,1);c.drawImage(panorama,0,sourceY,panorama.naturalWidth,sourceHeight,0,y,1100,height);c.restore();}};paint(0,surface,0,floor,time*3+departure);if(level===0){const ground=loadImage('/art/level-1-floor.png');if(ground.complete&&ground.naturalWidth){const scale=1100/ground.naturalWidth;const shift=(time*WORLDS[level].speed*speedMult)%2200;for(let tile=-1;tile<3;tile++){c.save();c.translate(tile*1100-shift+(tile%2!==0?1100:0),0);c.scale(tile%2!==0?-1:1,1);c.drawImage(ground,0,floor-320*scale,1100,ground.naturalHeight*scale);c.restore();}}}else{paint(surface,panorama.naturalHeight-surface,floor,240-floor,time*WORLDS[level].speed*speedMult);}}else{c.fillStyle=colors[level];c.fillRect(0,floor,1100,18);}const drawCue=(xPos:number,glyph:string,size=82)=>{c.save();c.font=`bold ${size}px sans-serif`;c.textAlign='center';c.textBaseline='top';const tw=c.measureText(glyph).width;c.fillStyle='#193444cc';if(c.roundRect){c.beginPath();c.roundRect(xPos-tw/2-14,14,tw+28,size+6,8);c.fill();}else{c.fillRect(xPos-tw/2-14,14,tw+28,size+6);}c.strokeStyle='#10222f';c.lineWidth=6;c.strokeText(glyph,xPos,16);c.fillStyle='#ffffff';c.fillText(glyph,xPos,16);c.restore();};
-   for(const o of engine.items){if(o.player!==i||o.passed&&o.kind==='bonus')continue;const x=o.x-[270,310,350,350,350][level]*speedMult*extrapolation;if(o.kind==='bonus'){const bonusY=floor-(o.obstacle==='overhead'?32:o.obstacle==='none'?170:112);if(level>=3){const image=loadImage(`/assets/bonuses/world-${level}.png`);if(image.complete&&image.naturalWidth)c.drawImage(image,x-18,bonusY-36,36,36);}else{c.font='28px sans-serif';c.fillText(WORLDS[level].bonus,x-14,bonusY);}if(level===0&&o.obstacle==='none')drawCue(x,'⇈',74);}else if(o.kind==='enemy'){
-     const image=loadImage(`/assets/enemies/${ENEMIES[level][o.variant%2].key}.png`);
-     const progress=o.defeatedAt?Math.min(1,(engine.tick*20-o.defeatedAt)/400):0;
-     c.save();c.translate(x,floor);c.rotate(-Math.PI/2*progress);c.globalAlpha=1-progress;
-     if(image.complete&&image.naturalWidth)c.drawImage(image,Math.floor(engine.tick/8)%4*192,0,192,192,-44,-88,88,88);c.restore();
-   }else if(o.obstacle==='overhead'){const v=o.variant%4;const ovImage=loadImage(`/assets/obstacles/overhead/level-${level}-variant-${v}.png`);if(ovImage.complete&&ovImage.naturalWidth){c.drawImage(ovImage,x-100,floor-155,200,160);if(level>=3)drawArch(c,x,floor,level);}else{drawArch(c,x,floor,level);}if(level===0)drawCue(x,'↓',82);}else{const image=loadImage(level>=3 ? `/assets/obstacles/world-${level}-${o.variant%3}.png` : `/assets/obstacles/${['rock','stakes','log'][o.variant]}.png`);if(image.complete&&image.naturalWidth)c.drawImage(image,x-42,floor-65,84,84);if(level===0)drawCue(x,'↑',82);}}
-      for(const shot of engine.projectiles??[])if(shot.player===i)drawSpell(c,shot.x+700*extrapolation,floor-30,CHARACTERS[p.hero].key,now/200);
-   const ownIndex=room.members.findIndex(m=>m.id===session?.id);
-   if(i===ownIndex){const button=el<HTMLButtonElement>('online-cast');const left=Math.max(0,(p.readyAt??0)-engine.tick*20);button.disabled=left>0;button.textContent=`${CHARACTERS[p.hero].symbol} ${SPELLS[CHARACTERS[p.hero].key].name} · ${left>0?(left/1000).toFixed(1)+' с':'D / →'}`;button.style.setProperty('--charge',`${(1-left/2000)*100}%`);}
-   const hero=CHARACTERS[p.hero];const atlas=hero.clean?'atlas-elemental':'atlas';let frameName=`run-${String(Math.floor(now/(85/speedMult))%hero.run).padStart(2,'0')}`;if(p.y<0){const flipCount=(hero.key==='kai'||hero.key==='leya')?6:4;if((p.jumps||0)>=2){frameName=`flip-${String(Math.floor(now/80)%flipCount).padStart(2,'0')}`;}else{frameName=p.velocity< -150?'jump-00':p.velocity<150?'jump-01':'jump-02';}}else if(p.duck)frameName=`duck-${String(hero.duck-1).padStart(2,'0')}`;const frame=atlases.get(hero.key)?.[frameName]?.frame;const image=loadImage(`/assets/characters/${hero.key}/${atlas}.png`);const isGhost=p.lives===0;c.globalAlpha=isGhost?.68:1;if(isGhost)c.filter='drop-shadow(0 0 10px #00ffff) drop-shadow(0 0 3px #00ffff) hue-rotate(155deg) saturate(1.8) brightness(1.25)';if(frame&&image.complete&&image.naturalWidth){const size=184;c.drawImage(image,frame.x,frame.y,frame.w,frame.h,160-size/2,floor+Math.min(0,p.y+p.velocity*extrapolation+950*extrapolation*extrapolation)-size*240/256,size,size)}c.filter='none';const pet=loadImage(`/assets/pets/${hero.petRest}.png`);if(pet.complete&&pet.naturalWidth)c.drawImage(pet,45,floor-66,70,70);c.globalAlpha=1;
-   c.fillStyle='#fff';c.font='bold 27px sans-serif';c.fillText(`Игрок ${i+1} · ${hero.name}`,20,34);c.fillText(p.lives===0?'👻 Призрак':'♥ '.repeat(p.lives)+'♡ '.repeat(Math.max(0,cfg.lives-p.lives)),460,34);c.textAlign='right';c.fillText(`${p.score} очков${p.connected?'':' · нет связи'}`,1080,34);c.textAlign='left';
-  }}requestAnimationFrame(draw);
+ function draw(now:number){
+  requestAnimationFrame(draw);
+  if(el('online').hidden||room?.phase!=='playing'||!room.engine)return;
+  const engine=room.engine,cfg=DIFFICULTIES[room.difficulty||'medium'];
+  const level=engine.world,speed=WORLDS[level].speed*cfg.speedMultiplier;
+  const extrapolation=Math.min((now-lastReceived)/1000,.06),time=engine.tick*.02+extrapolation;
+  const ownIndex=room.members.findIndex(m=>m.id===session?.id);
+  for(const [i,canvas] of canvases){
+   const p=engine.players[i];if(!p)continue;
+   const height=i===ownIndex?Math.max(120,Math.round(1100*canvas.parentElement!.clientHeight/Math.max(1,canvas.parentElement!.clientWidth))):300;
+   if(canvas.height!==height)canvas.height=height;
+   const c=canvas.getContext('2d')!,floor=height*.92,zoom=floor/276;
+   c.clearRect(0,0,1100,height);
+   c.fillStyle=['#271a20','#4d1b12','#0c1026','#384633','#b77e40'][level];c.fillRect(0,0,1100,height);
+   const panorama=loadImage(`/art/level-${level+1}-bg.png`),surface=[570,540,575,535,518][level];
+   const tileWidth=1100*zoom;
+   const tile=(image:HTMLImageElement,sourceY:number,sourceHeight:number,y:number,h:number,offset:number)=>{
+     if(!image.complete||!image.naturalWidth)return;
+     const shift=offset%(tileWidth*2);
+     for(let n=-1;n<Math.ceil(1100/tileWidth)+2;n++){
+       c.save();c.translate(n*tileWidth-shift+(n%2!==0?tileWidth:0),0);c.scale(n%2!==0?-1:1,1);
+       c.drawImage(image,0,sourceY,image.naturalWidth,sourceHeight,0,y,tileWidth,h);c.restore();
+     }
+   };
+   const departure=level===0?180*(1-Math.pow(1-Math.min(1,time/2.5),3)):0;
+   tile(panorama,0,surface,0,floor,time*3+departure);
+   if(level===0){
+     const ground=loadImage('/art/level-1-floor.png');
+     if(ground.complete&&ground.naturalWidth){const scale=tileWidth/ground.naturalWidth;tile(ground,0,ground.naturalHeight,floor-320*scale,ground.naturalHeight*scale,time*speed);}
+   }else if(panorama.complete&&panorama.naturalWidth){tile(panorama,surface,panorama.naturalHeight-surface,floor,(panorama.naturalHeight-surface)*floor/surface,time*speed);}
+   // Keep horizontal travel in world units; scale each drawing about its foot point.
+   const at=(x:number,lift:number,paint:()=>void)=>{c.save();c.translate(x,floor+lift*zoom);c.scale(zoom,zoom);paint();c.restore();};
+   const drawCue=(x:number,glyph:string,lift:number)=>at(x,lift,()=>{
+     c.font='bold 42px sans-serif';c.textAlign='center';c.strokeStyle='#15303f';c.lineWidth=5;c.strokeText(glyph,0,0);c.fillStyle='#fff1cf';c.fillText(glyph,0,0);
+   });
+   for(const o of engine.items){
+    if(o.player!==i||o.passed&&o.kind==='bonus')continue;
+    const x=o.x-speed*extrapolation;
+    if(o.kind==='bonus'){
+      const lift=-(o.obstacle==='overhead'?32:o.obstacle==='none'?170:112);
+      at(x,lift,()=>{if(level>=3){const image=loadImage(`/assets/bonuses/world-${level}.png`);if(image.complete&&image.naturalWidth)c.drawImage(image,-18,-36,36,36);}else{c.font='28px sans-serif';c.fillText(WORLDS[level].bonus,-14,0);}});
+      if(level===0&&o.obstacle==='none')drawCue(x,'⇈',-198);
+    }else if(o.kind==='enemy'){
+      at(x,0,()=>{const image=loadImage(`/assets/enemies/${ENEMIES[level][o.variant%2].key}.png`);const progress=o.defeatedAt?Math.min(1,(engine.tick*20-o.defeatedAt)/400):0;c.rotate(-Math.PI/2*progress);c.globalAlpha=1-progress;if(image.complete&&image.naturalWidth)c.drawImage(image,Math.floor(engine.tick/8)%4*192,0,192,192,-44,-88,88,88);});
+    }else if(o.obstacle==='overhead'){
+      at(x,0,()=>{const image=loadImage(`/assets/obstacles/overhead/level-${level}-variant-${o.variant%4}.png`);if(image.complete&&image.naturalWidth){c.drawImage(image,-100,-155,200,160);if(level>=3)drawArch(c,0,0,level);}else drawArch(c,0,0,level);});
+      if(level===0)drawCue(x,'↓',-160);
+    }else{
+      at(x,0,()=>{const image=loadImage(level>=3?`/assets/obstacles/world-${level}-${o.variant%3}.png`:`/assets/obstacles/${['rock','stakes','log'][o.variant]}.png`);if(image.complete&&image.naturalWidth)c.drawImage(image,-42,-77,84,84);});
+      if(level===0)drawCue(x,'↑',-90);
+    }
+   }
+   const hero=CHARACTERS[p.hero];
+   for(const shot of engine.projectiles??[])if(shot.player===i)at(shot.x+700*extrapolation,-30,()=>drawSpell(c,0,0,hero.key,now/200));
+   if(i===ownIndex){
+     const left=Math.max(0,(p.readyAt??0)-engine.tick*20);
+     for(const id of ['online-cast','online-cast-mirror']){const button=el<HTMLButtonElement>(id);button.disabled=left>0;button.setAttribute('aria-label',SPELLS[hero.key].name);button.querySelector('small')!.textContent=left>0?(left/1000).toFixed(1)+' с':'Готово';button.style.setProperty('--charge',`${(1-left/2000)*100}%`);}
+     el('online-duck').classList.toggle('is-held',p.duck);
+   }
+   const atlas=hero.clean?'atlas-elemental':'atlas';
+   let frameName=`run-${String(Math.floor(now/(85/cfg.speedMultiplier))%hero.run).padStart(2,'0')}`;
+   if(p.y<0){const flipCount=(hero.key==='kai'||hero.key==='leya')?6:4;frameName=(p.jumps||0)>=2?`flip-${String(Math.floor(now/80)%flipCount).padStart(2,'0')}`:p.velocity< -150?'jump-00':p.velocity<150?'jump-01':'jump-02';}
+   else if(p.duck)frameName=`duck-${String(hero.duck-1).padStart(2,'0')}`;
+   const frame=atlases.get(hero.key)?.[frameName]?.frame,image=loadImage(`/assets/characters/${hero.key}/${atlas}.png`);
+   at(160,Math.min(0,p.y+p.velocity*extrapolation+950*extrapolation*extrapolation),()=>{
+     if(p.lives===0){c.globalAlpha=.68;c.filter='drop-shadow(0 0 8px #00ffff) hue-rotate(155deg)';}
+     const size=256*hero.scale;if(frame&&image.complete&&image.naturalWidth)c.drawImage(image,frame.x,frame.y,frame.w,frame.h,-size/2,-size*240/256,size,size);
+   });
+   const pet=loadImage(`/assets/pets/${hero.petRest}.png`);at(56,0,()=>{if(pet.complete&&pet.naturalWidth)c.drawImage(pet,-42,-73,83,83);});
+  }
+ }
+ requestAnimationFrame(draw);
  el('create-room').onclick=()=>void enter('rooms');el('join-room').onsubmit=e=>{e.preventDefault();void enter(`rooms/${el<HTMLInputElement>('room-code').value}/join`)};
- el('online-difficulty-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-diff]');if(card&&!card.disabled&&card.dataset.onlineDiff)transmit('difficulty',{difficulty:card.dataset.onlineDiff});};
- el('online-hero-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-hero]');if(card)transmit('hero',{hero:Number(card.dataset.onlineHero)})};
- el('online-ready').onclick=()=>transmit('ready');el('online-start').onclick=()=>transmit('start');el('online-back').onclick=()=>{disconnect();show('home')};el('copy-invite').onclick=()=>{if(room)void navigator.clipboard.writeText(`${location.origin}/?room=${room.code}`).then(()=>{el('connection-status').textContent='Приглашение скопировано'}).catch(()=>{el('online-error').textContent=`${location.origin}/?room=${room!.code}`})};
+ el('online-difficulty-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-diff]');if(card&&!card.disabled&&card.dataset.onlineDiff)lobbyAction('difficulty',{difficulty:card.dataset.onlineDiff},next=>next.difficulty===card.dataset.onlineDiff);};
+ el('online-hero-picker').onclick=e=>{const card=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-online-hero]');if(card&&!card.disabled)lobbyAction('hero',{hero:Number(card.dataset.onlineHero)},next=>next.members.find(member=>member.id===session?.id)?.hero===Number(card.dataset.onlineHero))};
+ el('online-ready').onclick=()=>lobbyAction('ready',{},next=>next.members.find(member=>member.id===session?.id)?.ready===true);el('online-start').onclick=()=>{const phase=room?.phase;lobbyAction('start',{},next=>next.phase!==phase)};el('online-back').onclick=()=>{disconnect();show('home')};el('copy-invite').onclick=()=>{if(room)void navigator.clipboard.writeText(`${location.origin}/?room=${room.code}`).then(()=>{el('connection-status').textContent='Приглашение скопировано'}).catch(()=>{el('online-error').textContent=`${location.origin}/?room=${room!.code}`})};
  const held=new Set<string>();const release=(source:string)=>{held.delete(source);if(!held.size)transmit('duck',{pressed:false})};
- el('online-cast').onpointerdown=e=>{e.preventDefault();transmit('cast')};
+ for(const id of ['online-cast','online-cast-mirror'])el(id).onpointerdown=e=>{e.preventDefault();transmit('cast')};
  el('online-jump').onpointerdown=e=>{e.preventDefault();transmit('jump')};const duck=el('online-duck');duck.onpointerdown=e=>{e.preventDefault();duck.setPointerCapture(e.pointerId);held.add(`p${e.pointerId}`);transmit('duck',{pressed:true})};for(const type of ['pointerup','pointercancel','lostpointercapture'])duck.addEventListener(type,e=>release(`p${(e as PointerEvent).pointerId}`));
  window.addEventListener('keydown',e=>{if(el('online').hidden||room?.phase!=='playing')return;if(['KeyW','ArrowUp','KeyS','ArrowDown','KeyD','ArrowRight'].includes(e.code))e.preventDefault();if(e.repeat)return;if(['KeyD','ArrowRight'].includes(e.code))transmit('cast');if(['KeyW','ArrowUp'].includes(e.code))transmit('jump');if(['KeyS','ArrowDown'].includes(e.code)){held.add(e.code);transmit('duck',{pressed:true})}});window.addEventListener('keyup',e=>{if(['KeyS','ArrowDown'].includes(e.code))release(e.code)});window.addEventListener('blur',()=>{held.clear();clearControls()});document.addEventListener('visibilitychange',()=>{if(document.hidden){held.clear();clearControls()}});
  let currentRankingDiff: DifficultyKey = 'medium';
+ let rankingLoading = false;
  async function ranking(diff: DifficultyKey = currentRankingDiff){
+  if(rankingLoading)return;
+  rankingLoading = true;
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.ranking-tab');
+  const reload = el<HTMLButtonElement>('ranking-reload');
+  tabs.forEach(tab => { tab.disabled = true; });
+  reload.disabled = true;
+  el('ranking-list').setAttribute('aria-busy', 'true');
   currentRankingDiff = diff;
   void syncPendingRankings(api);
   document.querySelectorAll<HTMLElement>('.ranking-tab').forEach(tab => {
@@ -316,6 +482,7 @@ export function mountNetwork(show:(id:string)=>void){
   const status=el('ranking-status'),list=el('ranking-list'),weekEl=el('ranking-week');
   status.textContent='Связываемся с книгой рекордов…';status.className='ranking-status is-loading';
   list.replaceChildren();
+  weekEl.textContent='';
   const cfg = DIFFICULTIES[diff] ?? DIFFICULTIES.medium;
   try{
    const data=await api<{week:string;difficulty:string;entries:{name:string;score:number}[]}>(`ranking?difficulty=${diff}`);
@@ -357,6 +524,11 @@ export function mountNetwork(show:(id:string)=>void){
    }catch{}
    status.className='ranking-status is-error';
    status.innerHTML='<div class="ranking-error"><span aria-hidden="true">📡</span><p>Нет связи с сервером рейтинга. Проверьте интернет и нажмите «Обновить».</p></div>';
+  }finally{
+   rankingLoading = false;
+   tabs.forEach(tab => { tab.disabled = false; });
+   reload.disabled = false;
+   list.setAttribute('aria-busy', 'false');
   }
  }
  window.addEventListener('online',()=>void syncPendingRankings(api));

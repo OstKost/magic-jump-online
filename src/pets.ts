@@ -12,6 +12,11 @@ export class Pet {
   private jumpIn = -1;
   private ownerAirborne = false;
   private baseScale = 0.65;
+  private arenaScale = 1;
+  setArenaScale(scale: number) {
+    this.arenaScale = scale;
+    this.sprite.setScale(this.baseScale * scale);
+  }
   private isAnimated: boolean;
   private isMoving = false;
 
@@ -46,7 +51,7 @@ export class Pet {
     const previousX = this.sprite.x;
     this.sprite.x += (target + Math.sin(this.age * 1.6) * 5 - this.sprite.x) * (1 - Math.exp(-dt * 1.8));
     const speed = (this.sprite.x - previousX) / Math.max(dt, .001);
-    this.sprite.setScale(this.baseScale);
+    this.sprite.setScale(this.baseScale * this.arenaScale);
 
     if (!this.isMoving) {
       this.isMoving = true;
@@ -87,10 +92,10 @@ export class Pet {
 
     if (this.key === 'eagle' || this.key === 'falcon') {
       const flightHover = -16 + Math.sin(this.age * 6) * 5;
-      this.sprite.y = floor + flightHover + this.hop;
+      this.sprite.y = floor + (flightHover + this.hop) * this.arenaScale;
     } else {
       const trot = this.isAnimated ? 0 : Math.sin(this.age * 12) * 2;
-      this.sprite.y = floor + this.hop + trot;
+      this.sprite.y = floor + (this.hop + trot) * this.arenaScale;
     }
   }
 
@@ -111,7 +116,7 @@ export class Pet {
     }
     this.sprite.setOrigin(.5, 112 / 128);
     this.sprite.y = floor;
-    this.sprite.setScale(this.baseScale, this.baseScale * (1 + Math.sin(this.age * 2.5) * .025));
+    this.sprite.setScale(this.baseScale * this.arenaScale, this.baseScale * this.arenaScale * (1 + Math.sin(this.age * 2.5) * .025));
   }
 
   stop() {

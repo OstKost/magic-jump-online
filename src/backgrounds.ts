@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
+import { arenaGround } from './arena-layout';
 import { WORLDS } from './rules';
 
 const WIDTH = 1100, HEIGHT = 300, FLOOR = 276;
 // Measured running surfaces in the supplied 2048 × 683 panoramas.
 const SURFACE_Y = [570, 540, 575, 535, 518];
-const MAX_SCALE_Y = 1.15;
 const SKY_COLORS = [
   { top: 0x5a8ecf, bottom: 0x73a1df }, // Level 0: Sofia Air Sky
   { top: 0x1e5a96, bottom: 0x5096d2 }, // Level 1: Stella Earth Sky
@@ -63,7 +63,9 @@ export class WorldBackground {
   }
   resize() {
     const laneHeight = this.scene.scale.height / this.count;
-    const scaleY = Math.min(laneHeight / HEIGHT, MAX_SCALE_Y);
+    // Fill each lane above its running surface without distorting the artwork.
+    const scaleY = arenaGround(this.scene.scale.height, this.count, 0) / FLOOR;
+    const scaleX = scaleY;
 
     this.skyGraphics.clear();
     this.groundGraphics.clear();
@@ -72,7 +74,7 @@ export class WorldBackground {
     const groundColor = GROUND_COLORS[this.level] ?? GROUND_COLORS[0];
 
     for (let row = 0; row < this.count; row++) {
-      const floorY = (row + 0.92) * laneHeight;
+      const floorY = arenaGround(this.scene.scale.height, this.count, row);
       const sceneryTop = floorY - FLOOR * scaleY;
       const rowTop = row * laneHeight;
       const rowBottom = (row + 1) * laneHeight;
@@ -88,17 +90,17 @@ export class WorldBackground {
     this.layers.forEach(({ sprite }, i) => {
       const row = i % this.count;
       const layer = Math.floor(i / this.count);
-      const floorY = (row + 0.92) * laneHeight;
+      const floorY = arenaGround(this.scene.scale.height, this.count, row);
       const sceneryTop = floorY - FLOOR * scaleY;
 
       if (layer === 0) {
         const sceneryHeight = FLOOR * scaleY;
         sprite.setPosition(0, sceneryTop).setSize(WIDTH, sceneryHeight);
-        sprite.tileScaleX = 1;
+        sprite.tileScaleX = scaleX;
         sprite.tileScaleY = scaleY;
       } else {
         sprite.setPosition(0, sceneryTop).setSize(WIDTH, HEIGHT * scaleY);
-        sprite.tileScaleX = 1;
+        sprite.tileScaleX = scaleX;
         sprite.tileScaleY = scaleY;
       }
     });
@@ -111,7 +113,9 @@ export class WorldBackground {
     const departure = offset - this.departureOffset;
     this.departureOffset = offset;
     this.layers.forEach(({ sprite, speed }) => {
-      sprite.tilePositionX += speed * dt + (speed === 3 ? departure : 0);
+      // Tile offsets use texture pixels; compensate for zoom so the floor
+      // moves at the same scene-space speed as obstacles and bonuses.
+      sprite.tilePositionX += (speed * dt + (speed === 3 ? departure : 0)) / sprite.tileScaleX;
     });
   }
 }

@@ -37,9 +37,9 @@ export class ElementMagic {
       });
     }
   }
-  update(dt:number,x:number,y:number,ground:number,mode:MagicMode,speed:number,sprite?:Phaser.GameObjects.Sprite){
+  update(dt:number,x:number,y:number,ground:number,mode:MagicMode,speed:number,sprite?:Phaser.GameObjects.Sprite,scale=1){
     this.phase+=dt;
-    const g=this.graphics;g.clear().setPosition(x,ground);
+    const g=this.graphics;g.clear().setPosition(x,ground).setScale(scale);
     // Flip poses lift the artwork inside its fixed frame. Follow its visible edge,
     // rather than the empty space at the sprite origin.
     let anchorY=y;
@@ -64,11 +64,11 @@ export class ElementMagic {
         }
         this.frameBottoms.set(key,bottom);
       }
-      anchorY+=(bottom-sprite.displayOriginY)*sprite.scaleY+8;
+      anchorY+=(bottom-sprite.displayOriginY)*sprite.scaleY+8*scale;
     }
-    const lift=anchorY-ground;
+    const lift=(anchorY-ground)/scale;
     const movement=lift-(this.previousLift??lift);
-    this.trail=advanceMagicTrail(this.trail,dt,speed,lift,this.previousLift??lift,mode!=='none');
+    this.trail=advanceMagicTrail(this.trail,dt,speed/scale,lift,this.previousLift??lift,mode!=='none');
     this.previousLift=lift;
     for(const spark of this.sparks)spark.y+=movement;
     for(let i=1;i<this.trail.length;i++){

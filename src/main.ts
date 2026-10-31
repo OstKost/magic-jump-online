@@ -6,11 +6,14 @@ import { installMenuKeyboard } from './menu-keyboard';
 import { cueOffset, cueFrame, consumeCue, type TutorialCue } from './tutorial-cues';
 import { api, mountNetwork, nameForms, drawArch, type Action, type Attempt } from './network';
 import './style.css';
+import './game-window.css';
+import { actionIcon, castButtonContent } from './game-controls';
 import { CHARACTERS, portraitMarkup, petMarkup } from './characters';
 import { Journey } from './journey';
 import { Pet } from './pets';
 import { ElementMagic } from './element-magic';
 import { WorldBackground } from './backgrounds';
+import { arenaGround, arenaElementScale } from './arena-layout';
 import { obstacleCollision, award, GRAVITY, hit, JUMP_VELOCITY, LEVEL_SECONDS, newPlayer, route, worldOrder, WORLDS, jumpVelocity, DIFFICULTIES, type DifficultyKey, type DifficultyConfig, type ObstacleType, type Player, type Spawn } from './rules';
 import { initPWA, showToast } from './pwa';
 import { ExitConfirmationController } from './confirm-exit';
@@ -35,8 +38,8 @@ app.innerHTML = `
     <h1>Волшебный<br><em>Прыжок Онлайн</em></h1>
     <p class="tagline">Вместе сквозь миры</p><div class="ornament" aria-hidden="true">──── ◇ ────</div>
     <nav class="home-menu" aria-label="Главное меню">
-      <button id="play-menu" class="menu-item menu-featured"><span class="menu-icon" aria-hidden="true">水</span><span>2 игрока</span></button>
       <button id="solo-menu" class="menu-item">1 игрок</button>
+      <button id="play-menu" class="menu-item">2 игрока</button>
       <button id="online-menu" class="menu-item"><span class="menu-label">Онлайн</span><span class="menu-status" hidden>нет интернета</span></button><button id="ranking-menu" class="menu-item">Рейтинг</button>
       <button id="install-menu" class="menu-item"><span class="menu-icon" aria-hidden="true">⬇</span><span class="install-text">Скачать игру</span></button>
       <button id="settings-open" class="menu-item"><span class="menu-icon" aria-hidden="true">⚙</span><span>Настройки</span></button>
@@ -123,13 +126,15 @@ app.innerHTML = `
 </section>
 <section id="result" class="screen result-screen" hidden><div class="result-content"><span class="eyebrow" id="result-eyebrow"></span><h2 id="result-title"></h2><p id="result-description"></p><div id="result-party" class="result-party"></div><div id="result-scores" class="result-scores"></div><div id="result-ranking" class="result-ranking"></div><button id="result-next" class="primary"></button><button id="result-menu" class="secondary">В главное меню</button></div></section>
 <section id="play-screen" class="screen play-screen" hidden>
-<div class="player-controls sofia"><button class="jump sofia" data-jump="0" aria-label="Прыжок первого игрока, Софии"><span class="jump-element">水</span><small>ИГРОК 1</small><strong>София</strong><span class="jump-glyph">↟</span><span class="jump-action">Прыжок</span><kbd>W</kbd></button><button class="duck-control" data-duck="0" aria-label="Присед Софии"><span>↧</span><strong>Присед</strong><small>Удерживайте</small><kbd>S</kbd></button></div>
+<div class="player-controls sofia"><button class="jump sofia" data-jump="0" aria-label="Прыжок первого игрока, Софии"><span class="jump-element">水</span><small>ИГРОК 1</small><strong>София</strong><span class="jump-glyph">${actionIcon('jump')}</span><span class="jump-action">Прыжок</span><kbd>W</kbd></button><button class="duck-control" data-duck="0" aria-label="Присед Софии"><span>${actionIcon('duck')}</span><strong>Присесть</strong><small>Удерживайте</small><kbd>S</kbd></button></div>
 <div class="play-center"><div class="arena-wrap"><div id="game"></div>
-<div class="lane-label top"><span class="avatar lavender">水</span><div><strong>Игрок 1 · София</strong><span id="lives-0">♥ ♥ ♥</span></div><b id="score-0">0 <small>очков</small></b></div>
-<div class="lane-label bottom"><span class="avatar mint">火</span><div><strong>Игрок 2 · Стелла</strong><span id="lives-1">♥ ♥ ♥</span></div><b id="score-1">0 <small>очков</small></b></div>
-<div class="arena-toolbar"><button id="home-button" class="icon-button" aria-label="В меню">⌂</button><span id="world-title">Горы небожителей</span><span class="timer" id="timer">01:00</span><button id="pause" class="icon-button" aria-label="Пауза" disabled>Ⅱ</button></div>
-<div id="level-intro" class="level-intro" hidden><div class="location-title"><span class="location-ornament" aria-hidden="true">✦ ─── ✧ ─── ✦</span><h2></h2><span class="location-subtitle"></span></div><div class="start-countdown" role="status" aria-live="assertive" aria-atomic="true"></div></div><div id="overlay" class="overlay" hidden></div></div></div>
-<div class="player-controls stella"><button class="jump stella" data-jump="1" aria-label="Прыжок второго игрока, Стеллы"><span class="jump-element">火</span><small>ИГРОК 2</small><strong>Стелла</strong><span class="jump-glyph">↟</span><span class="jump-action">Прыжок</span><kbd>↑</kbd></button><button class="duck-control" data-duck="1" aria-label="Присед Стеллы"><span>↧</span><strong>Присед</strong><small>Удерживайте</small><kbd>↓</kbd></button></div>
+${[0,1].map(row=>`<div class="player-window player-window-${row}" data-player-window="${row}">
+  <div class="lane-label ${row===0?'top':'bottom'}"><span class="avatar"></span><div><strong>Игрок ${row+1}</strong><span id="lives-${row}">♥ ♥ ♥</span></div><b id="score-${row}">0 <small>очков</small></b></div>
+  <div class="lane-status"><span class="lane-location" data-player-location></span><span class="lane-timer" ${row===0?'id="timer"':''} data-player-timer>00:20</span></div>
+</div>`).join('')}
+<div class="arena-toolbar"><button id="home-button" class="icon-button" aria-label="В меню">⌂</button><span id="world-title" hidden></span><div class="level-progress" role="progressbar" aria-label="Прогресс уровня" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><button id="pause" class="icon-button" aria-label="Пауза" disabled>Ⅱ</button></div>
+<div id="level-intro" class="level-intro" hidden>${[0,1].map(row=>`<div class="lane-intro" data-player-intro="${row}"><div class="location-title"><h2></h2><span class="location-subtitle"></span></div><div class="start-countdown" ${row===0?'role="status" aria-live="assertive" aria-atomic="true"':'aria-hidden="true"'}></div></div>`).join('')}</div><div id="overlay" class="overlay" hidden></div></div></div>
+<div class="player-controls stella"><button class="jump stella" data-jump="1" aria-label="Прыжок второго игрока"><span class="jump-element">火</span><small>ИГРОК 2</small><strong>Стелла</strong><span class="jump-glyph">${actionIcon('jump')}</span><span class="jump-action">Прыжок</span><kbd>↑</kbd></button><button class="duck-control" data-duck="1" aria-label="Присесть второму игроку"><span>${actionIcon('duck')}</span><strong>Присесть</strong><small>Удерживайте</small><kbd>↓</kbd></button></div>
 <div class="rotate-notice"><span>⤾</span><h2>Поверните телефон</h2><p>Играйте горизонтально: София слева, Стелла справа.<br>Две дорожки — в центре экрана.</p><button id="rotate-home" class="secondary">Вернуться в меню</button></div>
 <div id="confirm-exit-dialog" class="confirm-exit-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-exit-title" hidden>
   <div class="confirm-exit-backdrop" id="confirm-exit-backdrop"></div>
@@ -562,7 +567,7 @@ function openMenu() {
   const splash=document.querySelector<HTMLElement>('#splash')!;
   if(splash.hidden || opening)return;
   opening=true;splash.classList.add('is-leaving');
-  window.setTimeout(()=>{showScreen('home');document.querySelector<HTMLElement>('#play-menu')!.focus();opening=false;},window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:650);
+  window.setTimeout(()=>{showScreen('home');opening=false;},window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:650);
 }
 document.querySelector('#splash')!.addEventListener('pointerdown',openMenu);
 window.addEventListener('keydown',event=>{if(!document.querySelector<HTMLElement>('#splash')!.hidden&&!['Shift','Control','Alt','Meta'].includes(event.key)){event.preventDefault();openMenu();}});
@@ -658,8 +663,22 @@ document.querySelector('#exit-menu')!.addEventListener('click',()=>{showScreen('
 async function startLocal(count:number, difficulty: DifficultyKey = selectedDifficulty){
   if(startingLocal)return;
   startingLocal=true;
+  const screen = document.querySelector<HTMLElement>('#difficulty-select')!;
+  const buttons = screen.querySelectorAll<HTMLButtonElement>('button');
+  const subtitle = screen.querySelector<HTMLElement>('.panel-subtitle')!;
+  const caption = subtitle.textContent;
+  buttons.forEach(button => { button.disabled = true; });
+  screen.setAttribute('aria-busy', 'true');
+  subtitle.textContent = 'Начинаем приключение…';
+  subtitle.classList.add('request-loading');
   selectedDifficulty = difficulty;
-  try{attempt=await api<Attempt>('attempts',{count, difficulty});}catch{attempt=undefined;}finally{startingLocal=false;}
+  try{attempt=await api<Attempt>('attempts',{count, difficulty});}catch{attempt=undefined;}finally{
+    startingLocal=false;
+    buttons.forEach(button => { button.disabled = false; });
+    screen.setAttribute('aria-busy', 'false');
+    subtitle.textContent = caption;
+    subtitle.classList.remove('request-loading');
+  }
   logs=Array.from({length: WORLDS.length}, () => []);
   journey.count=count;
   document.querySelector('.mobile-app')!.classList.toggle('solo',count===1);
@@ -721,9 +740,11 @@ class Adventure extends Phaser.Scene {
       drawSpell(texture.context,32,24,hero.key,0);texture.refresh();
     }
     document.querySelectorAll<HTMLElement>('.player-controls').forEach((controls,row)=>{
-      const button=document.createElement('button');button.className='cast-control';button.dataset.cast=String(row);
-      button.innerHTML=`<span>✦</span><strong>Заклинание</strong><small>Готово</small><kbd>${row===0?'D':'→'}</kbd>`;
-      button.addEventListener('pointerdown',e=>{e.preventDefault();this.cast(row);});controls.append(button);
+      for(const mirror of row===0?[false,true]:[false]){
+        const button=document.createElement('button');button.className=`cast-control${mirror?' cast-mirror':''}`;button.dataset.cast=String(row);
+        button.innerHTML=castButtonContent(row===0?'D':'→');
+        button.addEventListener('pointerdown',e=>{e.preventDefault();this.cast(row);});controls.append(button);
+      }
     });
     for (const hero of CHARACTERS) {
       const flipCount = (hero.key === 'kai' || hero.key === 'leya') ? 6 : 4;
@@ -767,6 +788,7 @@ class Adventure extends Phaser.Scene {
     this.input.keyboard?.on('keydown', (event: KeyboardEvent)=> {
       if(document.querySelector<HTMLElement>('#play-screen')!.hidden)return;
       if (['ArrowUp','ArrowDown','ArrowRight','Space'].includes(event.code)) event.preventDefault();
+      document.querySelector('.mobile-app')!.classList.add('keyboard-input');
       if(event.repeat)return;
       if(event.code==='Escape'){
         if(this.exitController?.isOpen){
@@ -797,6 +819,7 @@ class Adventure extends Phaser.Scene {
       button.addEventListener('pointercancel',release);
       button.addEventListener('lostpointercapture',release);
     });
+    document.addEventListener('pointerdown',()=>document.querySelector('.mobile-app')!.classList.remove('keyboard-input'));
     document.querySelector('#pause')!.addEventListener('click',()=>this.togglePause());
     document.addEventListener('visibilitychange',()=>{if(document.hidden&&this.playing&&!this.paused)this.togglePause();});
     window.addEventListener('blur',()=>{if(this.playing&&!this.paused)this.togglePause();});
@@ -804,7 +827,8 @@ class Adventure extends Phaser.Scene {
     window.matchMedia('(orientation: portrait)').addEventListener('change',()=>this.checkOrientation());
   }
   goHome(){this.exitController?.reset();if(this.playing&&!this.paused)this.togglePause();this.orientationPaused=false;showScreen('home');}
-  ground(row:number){return this.scale.height*((row+ .92)/journey.count);}
+  ground(row:number){return arenaGround(this.scale.height,journey.count,row);}
+  get elementScale(){return arenaElementScale(this.scale.height,journey.count);}
   checkOrientation(){
     if(!this.playing||document.querySelector<HTMLElement>('#play-screen')!.hidden)return;
     if(window.matchMedia('(orientation: portrait)').matches){
@@ -816,12 +840,21 @@ class Adventure extends Phaser.Scene {
     if(!bounds.width||!bounds.height)return;
     this.scale.resize(1100,1100*bounds.height/bounds.width);
     this.background?.resize();
-    this.runners.forEach((r,row)=>{r.pet.sprite.y+=this.ground(row)+r.y-r.sprite.y;r.sprite.y=this.ground(row)+r.y;});
+    this.runners.forEach((r,row)=>{
+      // A mode change resizes the previous scene before rebuilding its runners.
+      if(row>=journey.count)return;
+      r.sprite.setScale(heroFor(row).scale*this.elementScale);
+      r.pet.setArenaScale(this.elementScale);
+      r.pet.sprite.y=this.ground(row);
+      r.sprite.y=this.ground(row)+r.y*this.elementScale;
+    });
     this.items.forEach(item=>{
       const bonusY=item.kind==='bonus'?(item.obstacle==='overhead'?32:item.obstacle==='none'?170:112):0;
-      item.icon.y=this.ground(item.row)-bonusY;
+      item.icon.setScale(this.elementScale);
+      item.icon.y=this.ground(item.row)-bonusY*this.elementScale;
       this.updateCue(item);
     });
+    this.shots.forEach(shot=>shot.icon.setScale(this.elementScale).setPosition(shot.x,this.ground(shot.row)-30*this.elementScale));
     this.checkOrientation();
   }
   drawWorld() {
@@ -830,8 +863,9 @@ class Adventure extends Phaser.Scene {
     for(let row=0;row<journey.count;row++) {
       const floor=this.ground(row);
       const hero=heroFor(row);
-      const sprite=this.add.sprite(160,floor,hero.key,'idle-00').setOrigin(.5,240/256).setScale(hero.scale).play(`${hero.key}-idle`);
+      const sprite=this.add.sprite(160,floor,hero.key,'idle-00').setOrigin(.5,240/256).setScale(hero.scale*this.elementScale).play(`${hero.key}-idle`);
       const pet=new Pet(this,row,floor,hero.pet);
+      pet.setArenaScale(this.elementScale);
       const magic=new ElementMagic(this,hero.key);
       this.runners.push({duckInputs:new Set(),ducking:false,y:0,velocity:0,jumps:0,sprite,pet,magic});
     }
@@ -850,9 +884,10 @@ class Adventure extends Phaser.Scene {
     const intro=document.querySelector<HTMLElement>('#level-intro')!;
     intro.hidden=false;intro.classList.remove('is-starting');
     intro.style.setProperty('--location-accent',WORLDS[this.world].accent);
-    intro.querySelector('h2')!.textContent=WORLDS[this.world].name;
-    intro.querySelector('.location-subtitle')!.textContent=WORLDS[this.world].subtitle;
-    intro.querySelector('.start-countdown')!.textContent='';
+    intro.querySelectorAll('h2').forEach(title=>title.textContent=WORLDS[this.world].name);
+    document.querySelectorAll('[data-player-location]').forEach(label=>label.textContent=WORLDS[this.world].name);
+    intro.querySelectorAll('.location-subtitle').forEach(label=>label.textContent=WORLDS[this.world].subtitle);
+    intro.querySelectorAll('.start-countdown').forEach(label=>label.textContent='');
     this.renderReady();
     document.querySelector('#selection-hint')!.textContent=attempt
       ? `Сложность «${cfg.name}» · Результат можно записать в общий рейтинг`
@@ -862,17 +897,18 @@ class Adventure extends Phaser.Scene {
     journey.selected.forEach((_,row)=>{
       const hero=heroFor(row),controls=document.querySelectorAll<HTMLElement>('.player-controls')[row],label=document.querySelectorAll<HTMLElement>('.lane-label')[row];
       controls.style.setProperty('--hero-color',hero.color);controls.dataset.hero=hero.key;
-      controls.querySelector('.cast-control')!.setAttribute('aria-label',SPELLS[hero.key].name);
-      controls.querySelector('.cast-control span')!.textContent=hero.symbol;
+      controls.querySelectorAll('.cast-control').forEach(button=>button.setAttribute('aria-label',SPELLS[hero.key].name));
       controls.querySelector('.jump strong')!.textContent=hero.name;controls.querySelector('.jump-element')!.textContent=hero.symbol;
       controls.querySelector('.jump')!.setAttribute('aria-label',`Прыжок игрока ${row+1}, ${hero.name}`);
       controls.querySelector('.duck-control')!.setAttribute('aria-label',`Присед игрока ${row+1}, ${hero.name}`);
-      label.querySelector('strong')!.textContent=`Игрок ${row+1} · ${hero.name}`;label.querySelector('.avatar')!.textContent=hero.symbol;
+      label.querySelector('strong')!.textContent=`Игрок ${row+1} · ${hero.name}`;label.querySelector('.avatar')!.innerHTML=portraitMarkup(hero);
+      label.style.setProperty('--hero-color',hero.color);
+      document.querySelector<HTMLElement>('#play-screen')!.style.setProperty('--hero-color',heroFor(0).color);
     });
   }
   renderReady(){
     overlay.hidden=false;overlay.classList.add('ready-overlay');
-    overlay.innerHTML=journey.selected.map((_,row)=>`<div class="ready-card ${journey.ready[row]?'is-ready':''}"><span class="eyebrow">ИГРОК ${row+1} · ${heroFor(row).name}</span><h2>${journey.ready[row]?'Готов!':'Готовы в путь?'}</h2><p>${journey.ready[row]?'Ждём напарника…':heroFor(row).companionReadyText+' Перепрыгни врага или используй заклинание — за победу +25.'}</p><button class="primary" data-ready="${row}" ${journey.ready[row]?'disabled':''}>${journey.ready[row]?'✓ Готов':`Я готов · ${row===0?'W / S':'↑ / ↓'}`}</button></div>`).join('');
+    overlay.innerHTML=journey.selected.map((_,row)=>`<div class="ready-card ${journey.ready[row]?'is-ready':''}"><span class="eyebrow">ИГРОК ${row+1} · ${heroFor(row).name}</span><h2>${WORLDS[this.world].name}</h2><span class="ready-state">${journey.ready[row]?'✓ Готов!':'Готовы в путь?'}</span><p>${journey.ready[row]?'Ждём напарника…':heroFor(row).companionReadyText+' Перепрыгни врага или используй заклинание — за победу +25.'}</p><button class="primary" data-ready="${row}" ${journey.ready[row]?'disabled':''}>${journey.ready[row]?'✓ Готов':`Я готов · ${row===0?'W / S':'↑ / ↓'}`}</button></div>`).join('');
     overlay.querySelectorAll<HTMLElement>('[data-ready]').forEach(button=>button.addEventListener('click',()=>this.markReady(Number(button.dataset.ready))));
     if(journey.ready.every(Boolean))overlay.querySelectorAll('p').forEach(p=>p.textContent='Вперёд, вместе!');
   }
@@ -887,7 +923,7 @@ class Adventure extends Phaser.Scene {
   begin() {
     document.querySelector<HTMLElement>('#level-intro')!.hidden=true;
     this.awaitingReady=false;this.readyCountdown=0;this.playing=true;this.paused=false;this.anims.paused=false;overlay.hidden=true;overlay.classList.remove('ready-overlay');
-    this.runners.forEach((r,row)=>r.sprite.setScale(heroFor(row).scale));
+    this.runners.forEach((r,row)=>r.sprite.setScale(heroFor(row).scale*this.elementScale));
     (document.querySelector('#pause') as HTMLButtonElement).disabled=false;document.querySelector('#pause')!.textContent='Ⅱ';
     this.orientationPaused=false;this.checkOrientation();
   }
@@ -903,11 +939,11 @@ class Adventure extends Phaser.Scene {
   cast(row:number){
     if(!this.runners[row]||!this.playing||this.paused||this.exitController?.isOpen||this.elapsed<(this.readyAt[row]??0))return;
     this.readyAt[row]=this.elapsed+SPELL_COOLDOWN_MS;
-    this.shots.push({x:160,distance:0,row,icon:this.add.image(160,this.ground(row)-30,`spell-${heroFor(row).key}`).setDepth(5)});
+    this.shots.push({x:160,distance:0,row,icon:this.add.image(160,this.ground(row)-30*this.elementScale,`spell-${heroFor(row).key}`).setScale(this.elementScale).setDepth(5)});
     logs[this.level].push({tick:Math.round(this.elapsed/20),player:row,kind:'cast',pressed:true});beep(680);
   }
-  clearDuck(){this.runners.forEach((r,row)=>{if(r.duckInputs.size&&this.playing)logs[this.level].push({tick:Math.round(this.elapsed/20),player:row,kind:'duck',pressed:false});r.duckInputs.clear();r.ducking=false;});}
-  togglePause(){if(this.exitController?.isOpen)this.exitController.cancel();if(!this.playing)return;this.paused=!this.paused;this.clearDuck();this.anims.paused=this.paused;document.querySelector('#pause')!.textContent=this.paused?'▶':'Ⅱ';overlay.hidden=!this.paused;if(this.paused){overlay.innerHTML='<div class="intro-mark">Ⅱ</div><h2>Маленькая передышка</h2><p>Ваше приключение подождёт.</p><button id="resume" class="primary">Продолжить →</button><button id="pause-home" class="secondary">В главное меню</button>';document.querySelector('#resume')!.addEventListener('click',()=>this.togglePause());document.querySelector('#pause-home')!.addEventListener('click',()=>this.goHome());}}
+  clearDuck(){this.runners.forEach((r,row)=>{if(r.duckInputs.size&&this.playing)logs[this.level].push({tick:Math.round(this.elapsed/20),player:row,kind:'duck',pressed:false});r.duckInputs.clear();r.ducking=false;document.querySelector(`[data-duck="${row}"]`)?.classList.remove('is-held');});}
+  togglePause(){if(this.exitController?.isOpen)this.exitController.cancel();if(!this.playing)return;this.paused=!this.paused;this.clearDuck();this.anims.paused=this.paused;document.querySelector('#pause')!.textContent=this.paused?'▶':'Ⅱ';overlay.hidden=!this.paused;if(this.paused){overlay.innerHTML='<div class="intro-mark">Ⅱ</div><h2>Маленькая передышка</h2><p id="pause-location"></p><button id="resume" class="primary">Продолжить →</button><button id="pause-home" class="secondary">В главное меню</button>';document.querySelector('#pause-location')!.textContent=document.querySelector('#world-title')!.textContent;document.querySelector('#resume')!.addEventListener('click',()=>this.togglePause());document.querySelector('#pause-home')!.addEventListener('click',()=>this.goHome());}}
   spawn(s:Spawn & {row:number}){const row=s.row;{
     const bonus=s.kind==='bonus', x=1150, obstacle=s.obstacle??'ground';
     let icon: Item['icon'];
@@ -917,7 +953,7 @@ class Adventure extends Phaser.Scene {
     }else if(bonus){
       const bonusY=obstacle==='overhead'?32:obstacle==='none'?170:112;
       const text=this.world>=3 ? this.add.image(0,0,`bonus-${this.world}`).setDisplaySize(36,36).setOrigin(.5,1) : this.add.text(0,0,WORLDS[this.world].bonus,{fontSize:'27px',fontFamily:'Arial'}).setOrigin(.5,1);
-      icon=this.add.container(x,this.ground(row)-bonusY,[text]);
+      icon=this.add.container(x,this.ground(row)-bonusY*this.elementScale,[text]);
     }else if(obstacle==='overhead'){
       const v = Math.abs(Math.floor(s.at / 1900)) % 4;
       const key = `overhead-${this.world}-${v}`;
@@ -939,6 +975,7 @@ class Adventure extends Phaser.Scene {
       const obstacleImage=this.add.image(0,0,this.world>=3 ? `ground-${this.world}-${s.variant%3}` : ['rock','stakes','log'][s.variant]).setOrigin(.5,176/192).setScale(.46);
       icon=this.add.container(x,this.ground(row),[obstacleImage]);
     }
+    icon.setScale(this.elementScale);
     const item: Item={variant:s.variant,x,kind:s.kind,row,passed:false,icon,obstacle,width:bonus?24:32};
     if(this.level===0&&s.kind!=='enemy'&&(!bonus||obstacle==='none')){
       const action=bonus?'double':obstacle==='overhead'?'duck':'jump';
@@ -959,16 +996,24 @@ class Adventure extends Phaser.Scene {
     if(!item.cue||!item.cueView)return;
     const frame=cueFrame(item.cue,item.x,WORLDS[this.world].speed*this.difficultyConfig.speedMultiplier,this.elapsed);
     const height=item.cue.action==='double'?198:item.cue.action==='duck'?145:83;
-    item.cueView.setPosition(frame.x,this.ground(item.row)-Math.min(height,this.scale.height/journey.count*.92-34)+frame.bob).setAlpha(frame.alpha);
+    item.cueView.setScale(this.elementScale).setPosition(frame.x,this.ground(item.row)-Math.min(height*this.elementScale,this.scale.height/journey.count*.92-34)+frame.bob*this.elementScale).setAlpha(frame.alpha);
   }
   hud(){
     const cfg = this.difficultyConfig;
     this.players.forEach((p,i)=>{
+      const lives=document.querySelector<HTMLElement>(`#lives-${i}`)!,score=document.querySelector<HTMLElement>(`#score-${i}`)!;
+      if(lives.dataset.value!==undefined&&Number(lives.dataset.value)>p.lives){lives.classList.remove('hud-hit');void lives.offsetWidth;lives.classList.add('hud-hit');}
+      if(score.dataset.value!==undefined&&Number(score.dataset.value)<p.score){score.classList.remove('hud-award');void score.offsetWidth;score.classList.add('hud-award');}
+      lives.dataset.value=String(p.lives);score.dataset.value=String(p.score);
+      document.querySelector(`[data-duck="${i}"]`)!.classList.toggle('is-held',Boolean(this.runners[i]?.duckInputs.size));
       document.querySelector(`#lives-${i}`)!.textContent=p.lives===0?'👻 Призрак':'♥ '.repeat(p.lives)+'♡ '.repeat(cfg.lives-p.lives);
       document.querySelector(`#score-${i}`)!.innerHTML=`${p.score} <small>очков</small>`;
     });
+    const progressBar=document.querySelector<HTMLElement>('.level-progress')!;
+    const progress=Math.min(100,this.elapsed/(cfg.levelSeconds*1000)*100);
+    progressBar.style.setProperty('--progress',`${progress}%`);progressBar.setAttribute('aria-valuenow',String(Math.round(progress)));
     const seconds=Math.ceil(Math.max(0,cfg.levelSeconds-this.elapsed/1000));
-    document.querySelector('#timer')!.textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+    document.querySelectorAll('[data-player-timer]').forEach(timer=>timer.textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`);
   }
   finish(){
     this.exitController?.reset();
@@ -1139,23 +1184,25 @@ class Adventure extends Phaser.Scene {
     if(this.awaitingReady){
       this.idleTime+=dt;
       this.runners.forEach((r,row)=>{
-        const hero=heroFor(row);
+        const hero=heroFor(row), scale=hero.scale*this.elementScale;
         if(['sofia','stella','air','earth'].includes(hero.key)){
           // A continuous breath keeps the feet planted and avoids abrupt pose changes.
           const breath=(1-Math.cos(this.idleTime*2+row*.8))*.5;
-          r.sprite.setScale(hero.scale*(1-breath*.004),hero.scale*(1+breath*.018));
+          r.sprite.setScale(scale*(1-breath*.004),scale*(1+breath*.018));
         }else{
-          r.sprite.setScale(hero.scale*(1+Math.sin(this.idleTime*2+row)*.012),hero.scale);
+          r.sprite.setScale(scale*(1+Math.sin(this.idleTime*2+row)*.012),scale);
         }
         r.pet.idle(dt,this.ground(row));
       });
       if(this.readyCountdown>0&&!window.matchMedia('(orientation: portrait)').matches){this.readyCountdown=Math.max(0,this.readyCountdown-dt);
         const label=this.readyCountdown>4?'':this.readyCountdown>3?'3':this.readyCountdown>2?'2':this.readyCountdown>1?'1':'Вперёд, маги!';
-        const countdown=document.querySelector<HTMLElement>('.start-countdown')!;
-        if(countdown.textContent!==label){
+        const countdowns=document.querySelectorAll<HTMLElement>('.start-countdown');
+        if(countdowns[0].textContent!==label){
+          countdowns.forEach(countdown=>{
           countdown.textContent=label;countdown.classList.toggle('is-go',label==='Вперёд, маги!');
           countdown.getAnimations().forEach(animation=>animation.cancel());
           if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)countdown.animate([{opacity:0,transform:'scale(.7)'},{opacity:1,transform:'scale(1)'}],{duration:280,easing:'ease-out'});
+          });
           if(label)beep(label==='Вперёд, маги!'?880:660);
         }
         if(this.readyCountdown<=0)this.begin();}
@@ -1182,9 +1229,9 @@ class Adventure extends Phaser.Scene {
       else if(r.ducking){
         if(r.sprite.anims.currentAnim?.key!==`${hero}-duck`||!String(r.sprite.frame.name).startsWith('duck-'))r.sprite.play(`${hero}-duck`);
       } else {r.sprite.anims.timeScale=currentSpeed/270;r.sprite.play(`${hero}-run`,true);}
-      r.sprite.y=this.ground(i)+r.y;
+      r.sprite.y=this.ground(i)+r.y*this.elementScale;
       const hurt=String(r.sprite.frame.name).startsWith('hit-');
-      r.magic.update(dt,r.sprite.x,r.sprite.y,this.ground(i),hurt?'none':r.y<0?'jump':r.ducking?'duck':'none',currentSpeed,r.sprite);
+      r.magic.update(dt,r.sprite.x,r.sprite.y,this.ground(i),hurt?'none':r.y<0?'jump':r.ducking?'duck':'none',currentSpeed,r.sprite,this.elementScale);
       r.pet.update(dt,this.ground(i),r.y,r.ducking);
       const isGhost=this.players[i].lives===0;
       if(isGhost!==r.isGhost){
@@ -1204,11 +1251,12 @@ class Adventure extends Phaser.Scene {
       const candidates=this.items.filter(i=>i.kind==='enemy'&&!i.passed).map(item=>({x:item.x-currentSpeed*dt,row:item.row,defeated:false,item}));
       const target=firstSpellTarget(candidates,shot.row,from-currentSpeed*dt,shot.x);
       if(target){target.item.passed=true;target.item.defeatedAt=this.elapsed;award(this.players[shot.row],ENEMY_REWARD);shot.distance=SPELL_RANGE;beep(900);}
-      shot.icon.setPosition(shot.x,this.ground(shot.row)-30);
+      shot.icon.setPosition(shot.x,this.ground(shot.row)-30*this.elementScale);
     }
     this.shots=this.shots.filter(shot=>{if(shot.distance>=SPELL_RANGE){shot.icon.destroy();return false;}return true;});
     document.querySelectorAll<HTMLButtonElement>('[data-cast]').forEach(button=>{
       const row=Number(button.dataset.cast),left=Math.max(0,(this.readyAt[row]??0)-this.elapsed);
+      if(button.disabled&&left===0){button.classList.remove('spell-ready');void button.offsetWidth;button.classList.add('spell-ready');}
       button.disabled=left>0;button.style.setProperty('--charge',`${(1-left/SPELL_COOLDOWN_MS)*100}%`);
       button.querySelector('small')!.textContent=left>0?`${(left/1000).toFixed(1)} с`:'Готово';
     });
